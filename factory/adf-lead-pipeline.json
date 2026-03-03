@@ -1,9 +1,0 @@
-{
-	"name": "adf-lead-pipeline",
-	"location": "westeurope",
-	"identity": {
-		"type": "SystemAssigned",
-		"principalId": "fc30bd1a-41f0-4243-b932-dfdb1ef683a3",
-		"tenantId": "8a37a18a-c8f1-450d-8a64-2d089b0f74eb"
-	}
-}
