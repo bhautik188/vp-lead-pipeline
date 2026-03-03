@@ -1,0 +1,23 @@
+{
+    "name": "Ls_SqlServer",
+    "properties": {
+        "type": "SqlServer",
+        "typeProperties": {
+            "server": "<your-sql-server>.database.windows.net",
+            "database": "LeadManagement",
+            "authenticationType": "SqlAuthentication",
+            "userName": "<username>",
+            "password": {
+                "type": "SecureString",
+                "value": "********"
+            },
+            "encrypt": true,
+            "trustServerCertificate": false
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        },
+        "annotations": []
+    }
+}

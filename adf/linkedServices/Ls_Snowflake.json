@@ -1,0 +1,22 @@
+{
+    "name": "Ls_Snowflake",
+    "properties": {
+        "type": "SnowflakeV2",
+        "typeProperties": {
+            "accountIdentifier": "<org>-<account>",
+            "database": "LEAD_DB",
+            "warehouse": "LEAD_WH",
+            "authenticationType": "Basic",
+            "user": "<snowflake-username>",
+            "password": {
+                "type": "SecureString",
+                "value": "********"
+            }
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        },
+        "annotations": []
+    }
+}
