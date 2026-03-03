@@ -18,5 +18,6 @@
             "type": "IntegrationRuntimeReference"
         },
         "annotations": []
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/linkedservices"
 }

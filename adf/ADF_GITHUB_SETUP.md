@@ -50,7 +50,39 @@ This guide walks you through connecting Azure Data Factory to GitHub for source 
 6. **Do not** initialize with README, .gitignore, or license if you already have local files.
 7. Click **Create repository**.
 
-### Step 2.2: Push Your Local Project to GitHub
+### Step 2.2: Set Up SSH Key and Push Your Local Project to GitHub
+
+#### Step 2.2a: Generate an SSH Key (if you don't have one)
+
+1. Open a terminal (Terminal on macOS/Linux, PowerShell or Git Bash on Windows).
+2. Run:
+   ```bash
+   ssh-keygen -t ed25519 -C "bhautik188@github.com"
+   ```
+   - Replace `your-email@example.com` with your GitHub email.
+   - When asked **"Enter file in which to save the key"**, press Enter to use the default (`~/.ssh/id_ed25519`).
+   - When asked for a passphrase, either enter one (recommended) or press Enter for none.
+3. The key is saved as `~/.ssh/id_ed25519` (private) and `~/.ssh/id_ed25519.pub` (public).
+
+**Alternative (RSA):** If your system doesn't support Ed25519:
+   ```bash
+   ssh-keygen -t rsa -b 4096 -C "your-email@example.com"
+   ```
+
+#### Step 2.2b: Add the SSH Key to GitHub
+
+1. Copy your **public key** to the clipboard:
+   - **macOS:** `pbcopy < ~/.ssh/id_ed25519.pub`
+   - **Linux:** `xclip -sel clip < ~/.ssh/id_ed25519.pub` or `cat ~/.ssh/id_ed25519.pub` and copy manually
+   - **Windows (Git Bash):** `cat ~/.ssh/id_ed25519.pub` and copy the output
+2. Go to [GitHub](https://github.com) → **Settings** (your profile) → **SSH and GPG keys**.
+3. Click **New SSH key**.
+4. **Title**: e.g. `My Laptop` or `Work PC`.
+5. **Key type**: **Authentication Key**.
+6. **Key**: Paste the public key (starts with `ssh-ed25519` or `ssh-rsa`).
+7. Click **Add SSH key**.
+
+#### Step 2.2c: Add Remote and Push Using SSH
 
 From your project folder (e.g. `VP Project/`):
 
@@ -58,8 +90,8 @@ From your project folder (e.g. `VP Project/`):
 # Initialize git if not already done
 git init
 
-# Add remote (replace with your repo URL)
-git remote add origin https://github.com/YOUR_USERNAME/vp-lead-project.git
+# Add remote using SSH URL (replace with your username and repo name)
+git remote add origin git@github.com:bhautik188/vp-lead-project.git
 
 # Add all files
 git add .
@@ -72,7 +104,19 @@ git branch -M main
 git push -u origin main
 ```
 
-Or use GitHub Desktop / VS Code Source Control to push.
+**SSH URL format:** `git@github.com:USERNAME/REPO_NAME.git`
+
+**If you already have an HTTPS remote**, switch to SSH:
+```bash
+git remote set-url origin git@github.com:bhautik188/vp-lead-project.git
+git push -u origin main
+```
+
+**Verify SSH connection:**
+```bash
+ssh -T git@github.com
+```
+You should see: `Hi USERNAME! You've successfully authenticated...`
 
 **Ensure your `adf/` folder structure is present:**
 
@@ -96,13 +140,50 @@ adf/
 
 ### Step 3.1: Open Git Configuration in ADF
 
-1. Go to [Azure Portal](https://portal.azure.com).
-2. Search for your **Data Factory** by name (e.g. `adf-lead-pipeline`).
-3. Click on the Data Factory resource to open it.
-4. In the left menu (under **Factory resources** or **Settings**), look for:
-   - **Git configuration**, or
-   - **Set up Git repository**
-5. Click **Git configuration** (or **Set up Git repository**).
+**Important:** Git configuration is **inside Azure Data Factory Studio** (the authoring UI), not on the Azure Portal resource page. You must open the Data Factory Studio first.
+
+#### Method A: From Azure Portal (recommended first-time path)
+
+1. Go to [https://portal.azure.com](https://portal.azure.com) and sign in.
+2. In the top search bar, type your **Data Factory name** (e.g. `adf-lead-pipeline`) and press Enter.
+3. Under **Resources**, click your Data Factory to open its **Overview** page.
+4. On the Overview page, find the **Open Azure Data Factory Studio** button (or **Author & Monitor** in older UI).
+5. Click **Open Azure Data Factory Studio**.
+   - A new tab opens with the ADF authoring interface (blue/purple theme, left sidebar with icons).
+6. You are now in **Azure Data Factory Studio**. Use one of the following to reach Git configuration:
+
+   **Option 1 – Management hub (most reliable)**  
+   - In the **left sidebar**, click the **gear icon** (Manage / Management hub).  
+   - The left menu expands. Under **Source control**, click **Git configuration**.  
+   - If no repository is connected, you'll see **Configure** – click it.
+
+   **Option 2 – Home page**  
+   - Click the **Azure Data Factory** logo or **Home** (house icon) in the top-left to go to the home page.  
+   - At the top of the home page, look for **Set up code repository** and click it.
+
+   **Option 3 – Authoring canvas**  
+   - If you're on any pipeline/canvas view, click the **Data Factory name** (or drop-down) in the top-left.  
+   - In the drop-down menu, select **Set up code repository**.
+
+#### Method B: Direct link to ADF Studio
+
+1. Go to `https://adf.azure.com` (or the URL shown when you open your Data Factory).
+2. Select your **subscription**, **resource group**, and **Data Factory** if prompted.
+3. Follow **Option 1** above: left sidebar → **gear icon (Manage)** → **Source control** → **Git configuration**.
+
+#### What you should see
+
+- A configuration pane titled **Configure code repository** or **Git configuration**.
+- Fields for **Repository type**, **GitHub account**, **Repository name**, **Branch**, **Root folder**, etc.
+- If Git is already configured, you'll see **Edit** instead of **Configure**.
+
+#### If you still can't find it
+
+| Where you are | What to do |
+|---------------|------------|
+| **Azure Portal** – Data Factory resource page (Overview, Metrics, etc.) | Git settings are **not** here. Click **Open Azure Data Factory Studio** and then follow Method A. |
+| **ADF Studio** – Left sidebar shows Pipelines, Datasets, etc. | Look for the **gear icon** at the bottom of the left sidebar (Manage). Click it, then **Git configuration** under Source control. |
+| **ADF Studio** – No gear icon visible | Try the **three-line menu (☰)** if the sidebar is collapsed. Click it to expand, then find the gear icon. |
 
 ### Step 3.2: Authorize GitHub
 
@@ -154,14 +235,33 @@ adf/
 
 ### Step 3.6: Open Data Factory Studio
 
-1. In your Data Factory overview page, click **Open Azure Data Factory Studio** (or **Author & Monitor**).
-2. A new tab opens with the ADF Studio (authoring UI).
-3. In the left pane, you should see:
-   - **Pipelines**
-   - **Datasets**
-   - **Linked services**
-   - **Triggers**
-   - A Git-related indicator (branch name, e.g. `main`) at the bottom or top.
+**When to do this:** If you configured Git from within ADF Studio (via Manage → Git configuration), you're already there – skip to Part 4. Do this step only if you configured Git from the Azure Portal resource page or a different entry point.
+
+**Where exactly to find "Open Azure Data Factory Studio":**
+
+1. Go to [Azure Portal](https://portal.azure.com).
+2. In the top search bar, type your **Data Factory name** and open the resource.
+3. You'll see the Data Factory resource page with tabs: **Overview**, **Activity log**, **Access control**, etc.
+4. Stay on (or click) the **Overview** tab.
+5. Look at the **top-center** or **top-right** of the main content area – you’ll see a horizontal toolbar with buttons.
+6. The button is usually labeled:
+   - **Open Azure Data Factory Studio**, or  
+   - **Open** (with a link icon), or  
+   - **Author & Monitor** (in older portal versions)
+7. It’s in the same toolbar area as **Refresh**, **Delete**, **Move**, etc.
+8. Click it. A new browser tab opens with the ADF authoring UI (`adf.azure.com` or similar).
+
+**If you don’t see it:**
+- Scroll up on the Overview page – the button is often near the factory name.
+- Some layouts show it as a **card** or **tile** under “Quick actions” or “Get started”.
+- You can also go directly to **https://adf.azure.com**, pick your subscription and Data Factory, and open it from there.
+
+**Once in ADF Studio, in the left pane you should see:**
+- **Pipelines**
+- **Datasets**
+- **Linked services**
+- **Triggers**
+- A Git branch indicator (e.g. `main`) near the bottom of the sidebar or in the top bar.
 
 ---
 

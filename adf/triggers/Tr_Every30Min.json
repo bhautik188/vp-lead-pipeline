@@ -20,5 +20,6 @@
                 "timeZone": "UTC"
             }
         }
-    }
+    },
+    "type": "Microsoft.DataFactory/factories/triggers"
 }
