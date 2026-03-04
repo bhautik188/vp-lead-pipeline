@@ -1,18 +1,18 @@
 {
-    "name": "LsSnowflake",
-    "properties": {
-        "type": "SnowflakeV2",
-        "typeProperties": {
-            "accountIdentifier": "<org-account>",
-            "database": "<database>",
-            "warehouse": "<warehouse>",
-            "authenticationType": "Basic",
-            "user": "<snowflake-username>",
-            "password": { "type": "SecureString", "value": "<snowflake-password>" }
-        },
-        "connectVia": {
-            "referenceName": "AutoResolveIntegrationRuntime",
-            "type": "IntegrationRuntimeReference"
-        }
-    }
+	"name": "LsSnowflake",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "SnowflakeV2",
+		"typeProperties": {
+			"authenticationType": "Basic",
+			"accountIdentifier": "SQ54018",
+			"user": "BHAUTIK188",
+			"database": "LEADMANAGEMENT",
+			"warehouse": "LEAD_WH",
+			"role": "ACCOUNTADMIN",
+			"host": "IWXPGGB-SQ54018.snowflakecomputing.com",
+			"encryptedCredential": "ew0KICAiVmVyc2lvbiI6ICIyMDE3LTExLTMwIiwNCiAgIlByb3RlY3Rpb25Nb2RlIjogIktleSIsDQogICJTZWNyZXRDb250ZW50VHlwZSI6ICJQbGFpbnRleHQiLA0KICAiQ3JlZGVudGlhbElkIjogIkRBVEFGQUNUT1JZQDI5REQ3RDExLTY5QkUtNDk3Ny1CMDUxLTc5REIyRTQzREQ1MF9hOTM1YjY0Zi0xMzJmLTRlYzAtOWI2Zi02OGViOWIxODZkZGMiDQp9"
+		}
+	}
 }
