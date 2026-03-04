@@ -29,6 +29,9 @@ def main() -> None:
         print("Warning: SQL_PASSWORD not set in .env")
         sql_pwd = "<your-password>"
 
+    # For local SQL Server, use Self-hosted IR. Set SELF_HOSTED_IR_NAME in .env (e.g. SelfHostedIR).
+    sql_ir = os.getenv("SELF_HOSTED_IR_NAME", "AutoResolveIntegrationRuntime")
+
     ls_sql = {
         "name": "LsSqlServer",
         "properties": {
@@ -41,7 +44,7 @@ def main() -> None:
                 "password": {"type": "SecureString", "value": sql_pwd},
             },
             "connectVia": {
-                "referenceName": "AutoResolveIntegrationRuntime",
+                "referenceName": sql_ir,
                 "type": "IntegrationRuntimeReference",
             },
         },
@@ -77,6 +80,8 @@ def main() -> None:
     (out_dir / "LsSnowflake.json").write_text(json.dumps(ls_sf, indent=2))
     print(f"Wrote {out_dir / 'LsSnowflake.json'}")
 
+    print("\nFor local SQL Server, add to .env:")
+    print("  SELF_HOSTED_IR_NAME=SelfHostedIR  # Name of your Self-hosted IR in ADF")
     print("\nAdd to .env for Snowflake:")
     print("  SNOWFLAKE_ACCOUNT=your-org-account")
     print("  SNOWFLAKE_DATABASE=LEADMANAGEMENT")

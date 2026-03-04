@@ -147,7 +147,13 @@ SQL_PASSWORD=your-actual-password
 
 ---
 
-### C2. Add Snowflake credentials to `.env`
+### C2. Add credentials to `.env`
+
+**For local SQL Server (used by ADF):** Add the name of your Self-hosted Integration Runtime:
+```
+SELF_HOSTED_IR_NAME=SelfHostedIR
+```
+Replace `SelfHostedIR` with the exact name you give the Self-hosted IR in ADF (E3). This makes the generated `LsSqlServer.json` use the correct runtime.
 
 Add these lines (replace with your real values):
 
@@ -283,15 +289,26 @@ If GitHub loaded linked services from `adf/`, they contain placeholders. Update 
 
 ---
 
-### E3. Set up Integration Runtime (for local SQL Server)
+### E3. Set up Self-hosted Integration Runtime (required for local SQL Server)
 
-Because SQL Server runs on `localhost`, ADF needs a **Self-hosted Integration Runtime** to reach it.
+**Why this is needed:** The default `AutoResolveIntegrationRuntime` runs inside Microsoft Azure’s network. When it tries to connect to `127.0.0.1`, it uses its own localhost (inside Azure), not your computer. Your SQL Server runs in Docker on your machine, so the cloud runtime cannot reach it.
+
+A **Self-hosted Integration Runtime** runs on your local machine. When it connects to `127.0.0.1:1433`, it correctly refers to your local Docker SQL Server.
+
+| | AutoResolveIntegrationRuntime | Self-hosted IR |
+|---|-------------------------------|----------------|
+| Runs where | Azure cloud | Your machine |
+| Can reach `127.0.0.1`? | No (its own localhost) | Yes (your localhost) |
+| For local SQL Server | Does not work | Required |
+
+**Steps:**
 
 1. **Manage** → **Integration runtimes**  
 2. **New** → **Self-hosted**  
 3. Name it (e.g. `SelfHostedIR`)  
 4. Follow the wizard to **download and install** it on your machine (where SQL Server runs)  
-5. After installation, update `LsSqlServer` so **Connect via** uses this Self-hosted IR instead of AutoResolve
+5. After installation, edit **LsSqlServer** → set **Connect via integration runtime** to this Self-hosted IR (replace AutoResolveIntegrationRuntime)  
+6. **Test connection** again
 
 ---
 
@@ -385,7 +402,7 @@ You should see 100 rows after the first successful run.
 
 | Issue | What to check |
 |-------|----------------|
-| Cannot connect to local SQL | Self-hosted IR installed and running; LsSqlServer uses it |
+| Cannot connect to local SQL | **AutoResolveIntegrationRuntime cannot reach `127.0.0.1`** — it runs in Azure and treats localhost as its own. Use a **Self-hosted Integration Runtime** installed on your machine. Edit LsSqlServer → Connect via → select the Self-hosted IR. |
 | Snowflake connection fails | Account identifier format, credentials, firewall |
 | Pipeline fails on Copy | Snowflake LEADS table exists; column mapping is correct |
 | Watermark error | `load_leads_to_sql.py` ran and created `adt_watermark` and `sp_UpdateWatermark` |
