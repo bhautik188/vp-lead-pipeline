@@ -206,19 +206,25 @@ The task requires **GitHub integration** for the ADF pipeline. Complete these st
 
 ### D0a. Push project to GitHub (if not already)
 
-1. Initialize Git (if needed):
+1. Initialize Git and commit (only if this is a new project):
    ```bash
    cd <your-project-directory>
    git init
    git add .
    git commit -m "Initial commit: Step 1 SQL, Step 2 ADF, Step 3 Snowflake"
    ```
+   **If the project already has Git:** run `git add .` and `git commit -m "..."` only if you have uncommitted changes.
 
-2. Create a repository on [GitHub](https://github.com/new) (e.g. `vp-lead-pipeline`).
+2. Create a repository on [GitHub](https://github.com/new) (e.g. `vp-lead-pipeline`). Do **not** initialize it with a README if the local project already has commits.
 
 3. Add remote and push:
    ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+   # If no remote exists yet:
+   git remote add origin https://github.com/bhautik188/vp-lead-pipeline.git
+
+   # If origin already exists, update the URL:
+   # git remote set-url origin https://github.com/bhautik188/vp-lead-pipeline.git
+
    git branch -M main
    git push -u origin main
    ```
