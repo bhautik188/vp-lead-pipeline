@@ -42,7 +42,7 @@ VP Project/
 │   ├── datasets/                # Ds_Leads_Sql, Ds_Leads_Snowflake
 │   ├── pipelines/               # Pl_SqlToSnowflake (incremental + alerts)
 │   ├── triggers/                # Tr_Every30Min
-│   └── ADF_GITHUB_SETUP.md      # GitHub integration guide
+│   └── GITHUB_INTEGRATION.md    # ADF + GitHub setup
 ├── logicapp/                    # Email alert on ADF failure
 │   └── README.md                # Logic App setup (HTTP trigger + Send email)
 ├── .github/workflows/
@@ -203,7 +203,7 @@ Run via sqlcmd, Azure Data Studio, or SSMS:
 | Incremental load | Watermark table + Lookup + Stored Proc |
 | Trigger every 30 min | `Tr_Every30Min` schedule trigger |
 | Email on failure | Web activity → Logic App → Send email (see `logicapp/README.md`) |
-| GitHub integration | See `adf/ADF_GITHUB_SETUP.md` |
+| GitHub integration | `adf/` folder in Git; connect ADF to GitHub for Save/Publish. See `adf/GITHUB_INTEGRATION.md` |
 
 **Pipeline parameter:** `LogicAppAlertUrl` – set to Logic App HTTP POST URL to enable email alerts.
 
