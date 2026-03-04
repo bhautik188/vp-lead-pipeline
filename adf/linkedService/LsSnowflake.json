@@ -1,0 +1,18 @@
+{
+    "name": "LsSnowflake",
+    "properties": {
+        "type": "SnowflakeV2",
+        "typeProperties": {
+            "accountIdentifier": "<org-account>",
+            "database": "<database>",
+            "warehouse": "<warehouse>",
+            "authenticationType": "Basic",
+            "user": "<snowflake-username>",
+            "password": { "type": "SecureString", "value": "<snowflake-password>" }
+        },
+        "connectVia": {
+            "referenceName": "AutoResolveIntegrationRuntime",
+            "type": "IntegrationRuntimeReference"
+        }
+    }
+}

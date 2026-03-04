@@ -1,0 +1,6 @@
+-- Step 3.2: Create database
+-- Run after 01_create_warehouse.sql
+
+CREATE DATABASE IF NOT EXISTS LEADMANAGEMENT;
+USE DATABASE LEADMANAGEMENT;
+USE WAREHOUSE LEAD_WH;

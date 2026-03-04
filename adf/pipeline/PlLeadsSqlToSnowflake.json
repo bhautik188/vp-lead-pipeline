@@ -1,0 +1,96 @@
+{
+    "name": "PlLeadsSqlToSnowflake",
+    "properties": {
+        "activities": [
+            {
+                "name": "LookupWatermark",
+                "type": "Lookup",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:00:30",
+                    "retry": 2
+                },
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "DsSqlWatermarkLookup",
+                        "type": "DatasetReference"
+                    },
+                    "firstRowOnly": true
+                }
+            },
+            {
+                "name": "CopyLeads",
+                "type": "Copy",
+                "dependsOn": [
+                    {
+                        "activity": "LookupWatermark",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.01:00:00",
+                    "retry": 2
+                },
+                "typeProperties": {
+                    "source": { "type": "SqlSource" },
+                    "sink": { "type": "SnowflakeV2Sink" },
+                    "translator": {
+                        "type": "TabularTranslator",
+                        "mappings": [
+                            {"source": {"name": "RowId"}, "sink": {"name": "ROWID"}},
+                            {"source": {"name": "Id"}, "sink": {"name": "ID"}},
+                            {"source": {"name": "State"}, "sink": {"name": "STATE"}},
+                            {"source": {"name": "CreatedDateUtc"}, "sink": {"name": "CREATEDDATEUTC"}},
+                            {"source": {"name": "CancellationRequestDateUtc"}, "sink": {"name": "CANCELLATIONREQUESTDATEUTC"}},
+                            {"source": {"name": "CancellationDateUtc"}, "sink": {"name": "CANCELLATIONDATEUTC"}},
+                            {"source": {"name": "CancellationRejectionDateUtc"}, "sink": {"name": "CANCELLATIONREJECTIONDATEUTC"}},
+                            {"source": {"name": "SoldEmployee"}, "sink": {"name": "SOLDEMPLOYEE"}},
+                            {"source": {"name": "CancelledEmployee"}, "sink": {"name": "CANCELLEDEMPLOYEE"}},
+                            {"source": {"name": "UpdatedDateUtc"}, "sink": {"name": "UPDATEDDATEUTC"}}
+                        ]
+                    }
+                },
+                "inputs": [
+                    {
+                        "referenceName": "DsSqlLeads",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "WatermarkValue": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}"
+                        }
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "DsSnowflakeLeads",
+                        "type": "DatasetReference"
+                    }
+                ]
+            },
+            {
+                "name": "UpdateWatermark",
+                "type": "SqlServerStoredProcedure",
+                "dependsOn": [
+                    {
+                        "activity": "CopyLeads",
+                        "dependencyConditions": ["Succeeded"]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.00:01:00",
+                    "retry": 2
+                },
+                "typeProperties": {
+                    "storedProcedureName": "dbo.sp_UpdateWatermark",
+                    "storedProcedureParameters": {
+                        "TableName": { "value": "Leads", "type": "String" },
+                        "OldWatermark": { "value": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}", "type": "DateTime" }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "LsSqlServer",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ]
+    }
+}

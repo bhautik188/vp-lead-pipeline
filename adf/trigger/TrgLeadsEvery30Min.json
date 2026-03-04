@@ -1,0 +1,21 @@
+{
+    "name": "TrgLeadsEvery30Min",
+    "properties": {
+        "pipelines": [
+            {
+                "pipelineReference": {
+                    "referenceName": "PlLeadsSqlToSnowflake",
+                    "type": "PipelineReference"
+                }
+            }
+        ],
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+            "recurrence": {
+                "frequency": "Minute",
+                "interval": 30,
+                "startTime": "2025-01-01T00:00:00Z"
+            }
+        }
+    }
+}

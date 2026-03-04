@@ -107,6 +107,39 @@ def insert_leads_to_sql(df: pd.DataFrame, params: dict) -> int:
             method="multi",
             chunksize=50,
         )
+
+        # Step 2: create watermark table and stored proc for ADF incremental loads
+        with engine.connect() as conn:
+            conn.execute(text("""
+                IF OBJECT_ID('dbo.adt_watermark') IS NULL
+                CREATE TABLE dbo.adt_watermark (
+                    TableName NVARCHAR(128) NOT NULL PRIMARY KEY,
+                    WatermarkValue DATETIME2 NOT NULL,
+                    LastModified DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+                )
+            """))
+            conn.execute(text("""
+                IF NOT EXISTS (SELECT 1 FROM dbo.adt_watermark WHERE TableName = 'Leads')
+                INSERT INTO dbo.adt_watermark (TableName, WatermarkValue, LastModified)
+                VALUES (N'Leads', '1900-01-01', GETUTCDATE())
+            """))
+            conn.execute(text("""
+                CREATE OR ALTER PROCEDURE dbo.sp_UpdateWatermark
+                    @TableName NVARCHAR(128), @OldWatermark DATETIME2
+                AS
+                BEGIN
+                    SET NOCOUNT ON;
+                    DECLARE @NewWatermark DATETIME2 = (
+                        SELECT ISNULL(MAX(UpdatedDateUtc), @OldWatermark)
+                        FROM dbo.Leads WHERE UpdatedDateUtc > @OldWatermark
+                    );
+                    UPDATE dbo.adt_watermark
+                    SET WatermarkValue = @NewWatermark, LastModified = GETUTCDATE()
+                    WHERE TableName = @TableName;
+                END
+            """))
+            conn.commit()
+
         return count
     except ImportError:
         print("Install: pip install pymssql sqlalchemy", file=sys.stderr)
@@ -127,7 +160,7 @@ def main() -> None:
 
         params = get_connection_params()
         inserted = insert_leads_to_sql(df, params)
-        print(f"Inserted {inserted} rows into Leads table")
+        print(f"Inserted {inserted} rows into Leads table (watermark table ready for Step 2 ADF)")
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

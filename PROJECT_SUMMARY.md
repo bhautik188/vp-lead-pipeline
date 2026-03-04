@@ -2,7 +2,7 @@
 
 ## 1. Project Overview
 
-This project implements the Data Engineering Task: loading Excel lead data into SQL Server (**Step 1**), moving it to Snowflake via Azure Data Factory (**Step 2**), and future Steps 3–4 (Snowflake + Python transform). It includes SQL scripts, a Python load script, ADF pipelines with incremental load, email alerts, and GitHub integration.
+This project implements **Step 1** of the Data Engineering Task: loading Excel lead data into SQL Server. It includes SQL scripts (for submission) and a Python script to automate the load. The solution supports 100 lead rows with duplicate Ids (same lead in different states/emails).
 
 ---
 
@@ -24,39 +24,26 @@ This project implements the Data Engineering Task: loading Excel lead data into 
 | **sqlalchemy** | Database connection and `to_sql()` |
 | **python-dotenv** | Load credentials from `.env` |
 
-### 2.3 Step 2 – Azure Data Factory & Alerts
-| Component | Purpose |
-|-----------|---------|
-| **Azure Data Factory** | Copy pipeline SQL → Snowflake, incremental load |
-| **Azure Logic App** | HTTP-triggered; sends email on pipeline failure |
-| **GitHub** | Source control for ADF; optional CI/CD via GitHub Actions |
-
 ---
 
 ## 3. Project Structure
 
 ```
 VP Project/
-├── adf/                         # Azure Data Factory
-│   ├── linkedServices/          # Ls_SqlServer, Ls_Snowflake
-│   ├── datasets/                # Ds_Leads_Sql, Ds_Leads_Snowflake
-│   ├── pipelines/               # Pl_SqlToSnowflake (incremental + alerts)
-│   ├── triggers/                # Tr_Every30Min
-│   └── GITHUB_INTEGRATION.md    # ADF + GitHub setup
-├── logicapp/                    # Email alert on ADF failure
-│   └── README.md                # Logic App setup (HTTP trigger + Send email)
-├── .github/workflows/
-│   └── adf-deploy.yml           # Optional: deploy ADF on publish
-├── sql/
-│   ├── 01_create_database.sql
-│   ├── 02_create_leads_table.sql
-│   ├── 03_insert_leads_data.sql
-│   ├── 04_create_watermark_table.sql   # For incremental load
-│   └── 05_update_watermark_sp.sql
-├── load_leads_to_sql.py
-├── start_sql_server.sh
-├── .env, .env.example, .gitignore
-└── PROJECT_SUMMARY.md
+├── .env                    # SQL credentials (gitignored)
+├── .env.example            # Template for .env
+├── .gitignore              # .env, venv/
+├── Data Enginnering Task Dummy Data.xlsx   # Source data (100 leads)
+├── Data_Engineering_Task.pdf              # Task specification
+├── load_leads_to_sql.py    # Python: loads Excel → SQL (creates DB/table)
+├── PROJECT_SUMMARY.md      # This file
+├── requirements.txt        # Python dependencies
+├── start_sql_server.sh     # Start SQL Server in Docker
+├── venv/                   # Python virtual environment
+└── sql/
+    ├── 01_create_database.sql    # Creates LeadManagement database
+    ├── 02_create_leads_table.sql # Creates Leads table
+    └── 03_insert_leads_data.sql # INSERT statements (100 rows)
 ```
 
 ---
@@ -123,12 +110,14 @@ The script will:
 2. Create `LeadManagement` database if missing
 3. Drop and recreate `Leads` table
 4. Insert all 100 rows from Excel
+5. Create `adt_watermark` table and `sp_UpdateWatermark` (for Step 2 ADF pipeline)
 
 ### 6.4 SQL Scripts (Manual / Submission)
 Run via sqlcmd, Azure Data Studio, or SSMS:
 1. `sql/01_create_database.sql`
 2. `sql/02_create_leads_table.sql`
 3. `sql/03_insert_leads_data.sql`
+4. `sql/04_create_watermark_table.sql` (optional; Python does this automatically)
 
 ---
 
@@ -195,21 +184,8 @@ Run via sqlcmd, Azure Data Studio, or SSMS:
 
 ---
 
-## 12. Step 2 – ADF Pipeline Summary
+## 12. Future Steps (per PDF)
 
-| Feature | Implementation |
-|---------|----------------|
-| Copy SQL → Snowflake | `Pl_SqlToSnowflake` Copy activity |
-| Incremental load | Watermark table + Lookup + Stored Proc |
-| Trigger every 30 min | `Tr_Every30Min` schedule trigger |
-| Email on failure | Web activity → Logic App → Send email (see `logicapp/README.md`) |
-| GitHub integration | `adf/` folder in Git; connect ADF to GitHub for Save/Publish. See `adf/GITHUB_INTEGRATION.md` |
-
-**Pipeline parameter:** `LogicAppAlertUrl` – set to Logic App HTTP POST URL to enable email alerts.
-
----
-
-## 13. Future Steps (per PDF)
-
+- ~~Step 2: Azure Data Factory pipeline (SQL → Snowflake)~~ **Done** – see `adf/`
 - Step 3: Snowflake setup (warehouse, database, Leads table)
 - Step 4: Python transformation (Leads → LeadEvents in Snowflake)

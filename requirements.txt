@@ -1,4 +1,3 @@
-snowflake-connector-python
 pandas
 openpyxl
 python-dotenv

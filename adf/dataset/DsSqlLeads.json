@@ -1,0 +1,21 @@
+{
+    "name": "DsSqlLeads",
+    "properties": {
+        "linkedServiceName": {
+            "referenceName": "LsSqlServer",
+            "type": "LinkedServiceReference"
+        },
+        "parameters": {
+            "WatermarkValue": { "type": "string" }
+        },
+        "type": "SqlServerTable",
+        "typeProperties": {
+            "schema": "dbo",
+            "table": "Leads",
+            "sqlReaderQuery": {
+                "value": "SELECT * FROM dbo.Leads WHERE UpdatedDateUtc > '@{dataset().WatermarkValue}'",
+                "type": "Expression"
+            }
+        }
+    }
+}
