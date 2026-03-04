@@ -1,25 +1,24 @@
 {
-    "name": "Tr_Every30Min",
-    "properties": {
-        "annotations": [],
-        "runtimeState": "Started",
-        "pipelines": [
-            {
-                "pipelineReference": {
-                    "referenceName": "Pl_SqlToSnowflake",
-                    "type": "PipelineReference"
-                }
-            }
-        ],
-        "type": "ScheduleTrigger",
-        "typeProperties": {
-            "recurrence": {
-                "frequency": "Minute",
-                "interval": 30,
-                "startTime": "2024-01-01T00:00:00Z",
-                "timeZone": "UTC"
-            }
+  "name": "Tr_Every30Min",
+  "properties": {
+    "annotations": [],
+    "runtimeState": "Started",
+    "pipelines": [
+      {
+        "pipelineReference": {
+          "referenceName": "Pl_SqlToSnowflake",
+          "type": "PipelineReference"
         }
-    },
-    "type": "Microsoft.DataFactory/factories/triggers"
+      }
+    ],
+    "type": "ScheduleTrigger",
+    "typeProperties": {
+      "recurrence": {
+        "frequency": "Minute",
+        "interval": 30,
+        "startTime": "2024-01-01T00:00:00Z",
+        "timeZone": "UTC"
+      }
+    }
+  }
 }

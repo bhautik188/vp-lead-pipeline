@@ -1,23 +1,21 @@
 {
-    "name": "Ls_Snowflake",
-    "properties": {
-        "type": "SnowflakeV2",
-        "typeProperties": {
-            "accountIdentifier": "<org>-<account>",
-            "database": "LEAD_DB",
-            "warehouse": "LEAD_WH",
-            "authenticationType": "Basic",
-            "user": "<snowflake-username>",
-            "password": {
-                "type": "SecureString",
-                "value": "********"
-            }
-        },
-        "connectVia": {
-            "referenceName": "AutoResolveIntegrationRuntime",
-            "type": "IntegrationRuntimeReference"
-        },
-        "annotations": []
+  "name": "Ls_Snowflake",
+  "properties": {
+    "type": "SnowflakeV2",
+    "typeProperties": {
+      "accountIdentifier": "<org>-<account>",
+      "database": "LEAD_DB",
+      "warehouse": "LEAD_WH",
+      "authenticationType": "Basic",
+      "user": "<username>",
+      "password": {
+        "type": "SecureString",
+        "value": "********"
+      }
     },
-    "type": "Microsoft.DataFactory/factories/linkedservices"
+    "connectVia": {
+      "referenceName": "AutoResolveIntegrationRuntime",
+      "type": "IntegrationRuntimeReference"
+    }
+  }
 }

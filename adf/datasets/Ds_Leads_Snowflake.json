@@ -1,33 +1,32 @@
 {
-    "name": "Ds_Leads_Snowflake",
-    "properties": {
-        "linkedServiceName": {
-            "referenceName": "Ls_Snowflake",
-            "type": "LinkedServiceReference"
-        },
-        "parameters": {
-            "SchemaName": {
-                "type": "string",
-                "defaultValue": "PUBLIC"
-            },
-            "TableName": {
-                "type": "string",
-                "defaultValue": "Leads"
-            }
-        },
-        "annotations": [],
-        "type": "SnowflakeV2Table",
-        "schema": [],
-        "typeProperties": {
-            "schema": {
-                "value": "@dataset().SchemaName",
-                "type": "Expression"
-            },
-            "table": {
-                "value": "@dataset().TableName",
-                "type": "Expression"
-            }
-        }
+  "name": "Ds_Leads_Snowflake",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "Ls_Snowflake",
+      "type": "LinkedServiceReference"
     },
-    "type": "Microsoft.DataFactory/factories/datasets"
+    "parameters": {
+      "SchemaName": {
+        "type": "String",
+        "defaultValue": "PUBLIC"
+      },
+      "TableName": {
+        "type": "String",
+        "defaultValue": "Leads"
+      }
+    },
+    "annotations": [],
+    "type": "SnowflakeV2Table",
+    "schema": [],
+    "typeProperties": {
+      "schema": {
+        "value": "@dataset().SchemaName",
+        "type": "Expression"
+      },
+      "table": {
+        "value": "@dataset().TableName",
+        "type": "Expression"
+      }
+    }
+  }
 }

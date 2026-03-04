@@ -1,33 +1,32 @@
 {
-    "name": "Ds_Leads_Sql",
-    "properties": {
-        "linkedServiceName": {
-            "referenceName": "Ls_SqlServer",
-            "type": "LinkedServiceReference"
-        },
-        "parameters": {
-            "SchemaName": {
-                "type": "string",
-                "defaultValue": "dbo"
-            },
-            "TableName": {
-                "type": "string",
-                "defaultValue": "Leads"
-            }
-        },
-        "annotations": [],
-        "type": "SqlServerTable",
-        "schema": [],
-        "typeProperties": {
-            "schema": {
-                "value": "@dataset().SchemaName",
-                "type": "Expression"
-            },
-            "table": {
-                "value": "@dataset().TableName",
-                "type": "Expression"
-            }
-        }
+  "name": "Ds_Leads_Sql",
+  "properties": {
+    "linkedServiceName": {
+      "referenceName": "Ls_SqlServer",
+      "type": "LinkedServiceReference"
     },
-    "type": "Microsoft.DataFactory/factories/datasets"
+    "parameters": {
+      "SchemaName": {
+        "type": "String",
+        "defaultValue": "dbo"
+      },
+      "TableName": {
+        "type": "String",
+        "defaultValue": "Leads"
+      }
+    },
+    "annotations": [],
+    "type": "SqlServerTable",
+    "schema": [],
+    "typeProperties": {
+      "schema": {
+        "value": "@dataset().SchemaName",
+        "type": "Expression"
+      },
+      "table": {
+        "value": "@dataset().TableName",
+        "type": "Expression"
+      }
+    }
+  }
 }
