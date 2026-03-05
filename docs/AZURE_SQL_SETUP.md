@@ -116,20 +116,49 @@ Open your Data Factory → **Author & monitor**.
 
 ### 5b. Replace SQL datasets
 
-The pipeline needs **Azure SQL Database** datasets instead of SQL Server datasets:
+The pipeline needs **Azure SQL Database** datasets instead of SQL Server datasets. The old `SqlServerTable` type is not compatible with the new `AzureSqlDatabase` linked service.
 
 1. **Manage** → **Datasets**
-2. **Delete** `DsSqlLeads` and `DsSqlWatermarkLookup`
-3. **New** → **Azure SQL Database**:
-   - Name: `DsSqlLeads`
-   - Linked service: `LsSqlServer`
-   - Table: `dbo.Leads`
-   - Add parameter: `WatermarkValue` (String)
-   - **Connection** → Edit → Query: `SELECT * FROM dbo.Leads WHERE UpdatedDateUtc > '@{dataset().WatermarkValue}'`
-4. **New** → **Azure SQL Database**:
-   - Name: `DsSqlWatermarkLookup`
-   - Linked service: `LsSqlServer`
-   - **Connection** → Edit → Query: `SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'`
+2. **Delete** `DsSqlLeads` and `DsSqlWatermarkLookup` (click the three dots → Delete). The pipeline will show validation errors until the new datasets exist — that’s expected.
+3. **New** → **Azure SQL Database** — create **DsSqlLeads**:
+   - **Name:** `DsSqlLeads`, **Linked service:** `LsSqlServer`
+   - The UI only offers **Table** — do not use that (it loads the full table every run).
+   - Click **Code** (</> icon) and paste this JSON, then **Save**:
+
+     ```json
+     {
+       "name": "DsSqlLeads",
+       "properties": {
+         "linkedServiceName": { "referenceName": "LsSqlServer", "type": "LinkedServiceReference" },
+         "parameters": { "WatermarkValue": { "type": "String" } },
+         "type": "AzureSqlTable",
+         "typeProperties": {
+           "schema": "dbo",
+           "table": "Leads",
+           "sqlReaderQuery": "SELECT * FROM dbo.Leads WHERE UpdatedDateUtc > '@{dataset().WatermarkValue}'"
+         }
+       }
+     }
+     ```
+
+4. **New** → **Azure SQL Database** — create **DsSqlWatermarkLookup**:
+   - **Name:** `DsSqlWatermarkLookup`, **Linked service:** `LsSqlServer`
+   - Click **Code** (</> icon) and paste this JSON, then **Save**:
+
+     ```json
+     {
+       "name": "DsSqlWatermarkLookup",
+       "properties": {
+         "linkedServiceName": { "referenceName": "LsSqlServer", "type": "LinkedServiceReference" },
+         "type": "AzureSqlTable",
+         "typeProperties": {
+           "schema": "dbo",
+           "table": "adt_watermark",
+           "sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'"
+         }
+       }
+     }
+     ```
 
 ### 5c. No changes needed
 
