@@ -30,7 +30,21 @@ def get_connection_params() -> dict:
         raise ValueError(
             "Set SQL_PASSWORD in .env or provide SQL_SERVER_CONNECTION_STRING"
         )
-    return {"server": server, "port": port, "database": database, "user": user, "password": password}
+
+    # Azure SQL: pymssql requires user@shortserver (e.g. admin@lead-sql)
+    is_azure = "database.windows.net" in server
+    if is_azure:
+        short_server = server.split(".")[0]
+        user = f"{user}@{short_server}" if "@" not in user else user
+
+    return {
+        "server": server,
+        "port": port,
+        "database": database,
+        "user": user,
+        "password": password,
+        "is_azure": is_azure,
+    }
 
 
 def load_excel_to_dataframe(excel_path: Path) -> pd.DataFrame:
@@ -54,31 +68,37 @@ def insert_leads_to_sql(df: pd.DataFrame, params: dict) -> int:
         from urllib.parse import quote_plus
 
         def make_url(db: str) -> str:
+            user_esc = quote_plus(params["user"])
+            pw_esc = quote_plus(params["password"])
             return (
-                f"mssql+pymssql://{params['user']}:{quote_plus(params['password'])}@"
+                f"mssql+pymssql://{user_esc}:{pw_esc}@"
                 f"{params['server']}:{params['port']}/{db}"
             )
 
-        engine_master = create_engine(make_url("master"))
-
-        last_err = None
-        for attempt in range(6):
-            try:
-                with engine_master.connect() as conn:
-                    conn.execute(text("SELECT 1"))
-                break
-            except Exception as e:
-                last_err = e
-                if attempt < 5:
-                    time.sleep(5)
-        else:
-            raise last_err
-
         db = params["database"]
-        with engine_master.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-            conn.execute(text(f"IF DB_ID('{db}') IS NULL CREATE DATABASE [{db}]"))
+        is_azure = params.get("is_azure", False)
 
-        engine = create_engine(make_url(db))
+        if is_azure:
+            # Azure SQL: database already exists (created via portal). Connect directly.
+            engine = create_engine(make_url(db))
+        else:
+            # On-prem: connect to master, create database if needed
+            engine_master = create_engine(make_url("master"))
+            last_err = None
+            for attempt in range(6):
+                try:
+                    with engine_master.connect() as conn:
+                        conn.execute(text("SELECT 1"))
+                    break
+                except Exception as e:
+                    last_err = e
+                    if attempt < 5:
+                        time.sleep(5)
+            else:
+                raise last_err
+            with engine_master.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
+                conn.execute(text(f"IF DB_ID('{db}') IS NULL CREATE DATABASE [{db}]"))
+            engine = create_engine(make_url(db))
         with engine.connect() as conn:
             conn.execute(text("IF OBJECT_ID('dbo.Leads') IS NOT NULL DROP TABLE Leads"))
             conn.execute(text("""

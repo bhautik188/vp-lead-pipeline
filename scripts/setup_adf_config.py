@@ -19,7 +19,7 @@ def main() -> None:
     out_dir = PROJECT_ROOT / "adf-config" / "linkedService"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # SQL Server (from .env)
+    # SQL Server or Azure SQL (from .env)
     sql_server = os.getenv("SQL_SERVER", "localhost")
     sql_port = os.getenv("SQL_SERVER_PORT", "1433")
     sql_db = os.getenv("SQL_DATABASE", "LeadManagement")
@@ -29,26 +29,49 @@ def main() -> None:
         print("Warning: SQL_PASSWORD not set in .env")
         sql_pwd = "<your-password>"
 
-    # For local SQL Server, use Self-hosted IR. Set SELF_HOSTED_IR_NAME in .env (e.g. SelfHostedIR).
-    sql_ir = os.getenv("SELF_HOSTED_IR_NAME", "AutoResolveIntegrationRuntime")
+    is_azure_sql = "database.windows.net" in sql_server
 
-    ls_sql = {
-        "name": "LsSqlServer",
-        "properties": {
-            "type": "SqlServer",
-            "typeProperties": {
-                "server": f"{sql_server},{sql_port}",
-                "database": sql_db,
-                "authenticationType": "SQL",
-                "userName": sql_user,
-                "password": {"type": "SecureString", "value": sql_pwd},
+    if is_azure_sql:
+        # Azure SQL Database: use AzureSqlDatabase, AutoResolve (no Self-hosted IR)
+        conn_str = (
+            f"Server=tcp:{sql_server},{sql_port};Initial Catalog={sql_db};"
+            f"User ID={sql_user};Password={sql_pwd};Encrypt=True;TrustServerCertificate=False;"
+        )
+        ls_sql = {
+            "name": "LsSqlServer",
+            "properties": {
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "connectionString": conn_str,
+                },
+                "connectVia": {
+                    "referenceName": "AutoResolveIntegrationRuntime",
+                    "type": "IntegrationRuntimeReference",
+                },
             },
-            "connectVia": {
-                "referenceName": sql_ir,
-                "type": "IntegrationRuntimeReference",
+        }
+        print("Detected Azure SQL Database – using AutoResolveIntegrationRuntime")
+    else:
+        # On-prem SQL Server: use Self-hosted IR if set
+        sql_ir = os.getenv("SELF_HOSTED_IR_NAME", "AutoResolveIntegrationRuntime")
+        ls_sql = {
+            "name": "LsSqlServer",
+            "properties": {
+                "type": "SqlServer",
+                "typeProperties": {
+                    "server": f"{sql_server},{sql_port}",
+                    "database": sql_db,
+                    "authenticationType": "SQL",
+                    "userName": sql_user,
+                    "password": {"type": "SecureString", "value": sql_pwd},
+                },
+                "connectVia": {
+                    "referenceName": sql_ir,
+                    "type": "IntegrationRuntimeReference",
+                },
             },
-        },
-    }
+        }
+
     (out_dir / "LsSqlServer.json").write_text(json.dumps(ls_sql, indent=2))
     print(f"Wrote {out_dir / 'LsSqlServer.json'}")
 

@@ -6,10 +6,12 @@ Follow these steps **in order** to complete the data pipeline (SQL → Snowflake
 
 ## Prerequisites
 
-- **Docker** — for local SQL Server  
+- **SQL:** Docker (local) **or** Azure SQL Database (recommended for Mac)
 - **Python 3.8+** — with `venv` created and packages installed  
 - **Azure account** — for Data Factory  
 - **Snowflake account** — [free trial](https://signup.snowflake.com)
+
+**Mac users:** See [docs/AZURE_SQL_SETUP.md](docs/AZURE_SQL_SETUP.md) for Azure SQL — no Docker or Self-hosted IR needed.
 
 ---
 
