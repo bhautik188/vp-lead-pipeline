@@ -141,7 +141,7 @@ The pipeline needs **Azure SQL Database** datasets instead of SQL Server dataset
      }
      ```
 
-4. **New** → **Azure SQL Database** — create **DsSqlWatermarkLookup**:
+4. **New** → **Azure SQL Database** — create **DsSqlWatermarkLookup** (name must match exactly — not `DsSqlWatermark`):
    - **Name:** `DsSqlWatermarkLookup`, **Linked service:** `LsSqlServer`
    - Click **Code** (</> icon) and paste this JSON, then **Save**:
 
@@ -159,6 +159,8 @@ The pipeline needs **Azure SQL Database** datasets instead of SQL Server dataset
        }
      }
      ```
+
+**If publish fails** ("Dataset is required", "Source dataset is required"): (a) Ensure both `DsSqlLeads` and `DsSqlWatermarkLookup` exist with those exact names. (b) Open the pipeline `PlLeadsSqlToSnowflake` and verify: **LookupWatermark** → Dataset: `DsSqlWatermarkLookup`; **CopyLeads** → Source: `DsSqlLeads` (with parameter `WatermarkValue`); **UpdateWatermark** → Linked service: `LsSqlServer`. If editing in repo, sync in ADF to load `adf/pipeline/PlLeadsSqlToSnowflake.json`.
 
 ### 5c. No changes needed
 

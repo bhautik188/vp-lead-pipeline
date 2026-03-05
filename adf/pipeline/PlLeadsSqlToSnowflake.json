@@ -13,6 +13,10 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"dataset": {
+						"referenceName": "DsSqlWatermarkLookup",
+						"type": "DatasetReference"
+					},
 					"firstRowOnly": true
 				}
 			},
@@ -33,6 +37,15 @@
 					"retryIntervalInSeconds": 30
 				},
 				"userProperties": [],
+				"inputs": [
+					{
+						"referenceName": "DsSqlLeads",
+						"type": "DatasetReference",
+						"parameters": {
+							"WatermarkValue": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}"
+						}
+					}
+				],
 				"typeProperties": {
 					"source": {
 						"type": "SqlSource",
@@ -56,6 +69,10 @@
 			{
 				"name": "UpdateWatermark",
 				"type": "SqlServerStoredProcedure",
+				"linkedServiceName": {
+					"referenceName": "LsSqlServer",
+					"type": "LinkedServiceReference"
+				},
 				"dependsOn": [
 					{
 						"activity": "CopyLeads",
@@ -78,10 +95,7 @@
 							"type": "String"
 						},
 						"OldWatermark": {
-							"value": {
-								"value": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}",
-								"type": "Expression"
-							},
+							"value": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}",
 							"type": "DateTime"
 						}
 					}
