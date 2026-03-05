@@ -188,20 +188,34 @@ ADF only allows direct Snowflake copy from Blob/S3. Staging is required. **Works
    - **Public access:** Private
 6. **Save** the container.
 
-#### 5c.2 Create linked service in ADF
+#### 5c.2 Generate SAS URI (required for Snowflake staging)
 
-1. **ADF** → **Manage** → **Linked services** → **+ New**
-2. Search **Azure Blob Storage** → **Continue**
-3. **Name:** `LsAzureBlobStaging`
-4. **Authentication method:** Account key
-5. **Storage account:** Select `leadadfstaging` from the dropdown (or use **Connection string** and paste from Portal → Storage account → **Access keys** → **Key1** → **Connection string**)
-6. **Test connection** → **Create**
+Snowflake staged copy only works with **SAS URI** auth — not account key.
 
-#### 5c.3 Sync and publish
+1. **Azure Portal** → open storage account `leadadfstaging`
+2. Left menu → **Shared access signature**
+3. **Allowed resource types:** Blob and Container
+4. **Allowed permissions:** Read, Write, Delete, List (all needed for staging)
+5. **Expiry:** e.g. 1 year from now (or longer for trials)
+6. **Generate SAS and connection string**
+7. Copy the **Blob SAS URL** — it looks like:  
+   `https://leadadfstaging.blob.core.windows.net/?sv=...&se=...&sig=...`
+
+#### 5c.3 Create linked service in ADF (SAS URI)
+
+1. **ADF** → **Manage** → **Linked services** → open **LsAzureBlobStaging** (or **+ New** → **Azure Blob Storage**)
+2. **Name:** `LsAzureBlobStaging`
+3. **Authentication method:** **SAS URI**
+4. **SAS URI:** Paste the Blob SAS URL from 5c.2
+5. **Test connection** → **Create** or **Save**
+
+#### 5c.4 Sync and publish
 
 - Pipeline in repo already uses `enableStaging: true` and path `adf-staging`.
 - If changes were made in Git, sync: **Author** → switch branch or refresh.
 - **Publish all**.
+
+**If you get "Staged copying data to Snowflake is supported when uses Azure Blob storage with SAS URI authentication"** — the staging linked service must use **SAS URI**, not Account key. Follow 5c.2–5c.3 to switch.
 
 ### 5d. No changes needed
 
