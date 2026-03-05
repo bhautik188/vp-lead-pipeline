@@ -160,16 +160,60 @@ The pipeline needs **Azure SQL Database** datasets instead of SQL Server dataset
      }
      ```
 
-**If publish fails** ("Dataset is required", "Source dataset is required"): (a) Ensure both `DsSqlLeads` and `DsSqlWatermarkLookup` exist with those exact names. (b) Open the pipeline `PlLeadsSqlToSnowflake` and verify: **LookupWatermark** → Dataset: `DsSqlWatermarkLookup`; **CopyLeads** → Source: `DsSqlLeads` (with parameter `WatermarkValue`); **UpdateWatermark** → Linked service: `LsSqlServer`. If editing in repo, sync in ADF to load `adf/pipeline/PlLeadsSqlToSnowflake.json`.
+**If publish fails** or Connection shows "Table: Select..." / "Loading..." — the Table UI does not work for this pipeline. Fix it via Code view:
 
-### 5c. No changes needed
+1. Open **DsSqlLeads** → click **Code** (</> icon, top right) → **replace all** with the DsSqlLeads JSON above → **Save**.
+2. Open **DsSqlWatermarkLookup** → click **Code** (</> icon) → **replace all** with the DsSqlWatermarkLookup JSON above → **Save**.
+3. Publish again.
+
+If errors persist, also verify the pipeline: **LookupWatermark** → Dataset: `DsSqlWatermarkLookup`; **CopyLeads** → Source: `DsSqlLeads` (parameter `WatermarkValue`); **UpdateWatermark** → Linked service: `LsSqlServer`.
+
+### 5c. Azure Blob staging (required for Step 2 SQL → Snowflake copy)
+
+ADF only allows direct Snowflake copy from Blob/S3. Staging is required. **Works on Mac + Azure trial.**
+
+#### 5c.1 Create storage account (Azure trial, ~$0.02/month for small loads)
+
+1. Go to [portal.azure.com](https://portal.azure.com) in your browser (Safari, Chrome, etc.).
+2. **Create a resource** → search **Storage account** → **Create**.
+3. **Basics:**
+   - **Resource group:** same as ADF (e.g. `lead-adf-rg`)
+   - **Storage account name:** e.g. `leadadfstaging` (globally unique; lowercase, no spaces)
+   - **Region:** same as ADF
+   - **Performance:** Standard
+   - **Redundancy:** LRS (cheapest)
+4. **Review** → **Create**. Wait ~30 seconds.
+5. Open the new storage account → **Containers** → **+ Container**:
+   - **Name:** `adf-staging`
+   - **Public access:** Private
+6. **Save** the container.
+
+#### 5c.2 Create linked service in ADF
+
+1. **ADF** → **Manage** → **Linked services** → **+ New**
+2. Search **Azure Blob Storage** → **Continue**
+3. **Name:** `LsAzureBlobStaging`
+4. **Authentication method:** Account key
+5. **Storage account:** Select `leadadfstaging` from the dropdown (or use **Connection string** and paste from Portal → Storage account → **Access keys** → **Key1** → **Connection string**)
+6. **Test connection** → **Create**
+
+#### 5c.3 Sync and publish
+
+- Pipeline in repo already uses `enableStaging: true` and path `adf-staging`.
+- If changes were made in Git, sync: **Author** → switch branch or refresh.
+- **Publish all**.
+
+### 5d. No changes needed
 
 - **LsSnowflake**, **DsSnowflakeLeads** — keep as-is
-- **PlLeadsSqlToSnowflake** — no changes
+- **PlLeadsSqlToSnowflake** — uses staging (in repo)
 - **TrgLeadsEvery30Min** — no changes
 - **GitHub** — no changes
 
 5. **Publish all**
+
+**If "Lookup activity Source type is required"**: Open **LookupWatermark** → **Settings** → ensure **Source dataset** = `DsSqlWatermarkLookup`. If set, try Validate again or close/reopen the pipeline.
+
 
 ---
 
@@ -180,5 +224,5 @@ The pipeline needs **Azure SQL Database** datasets instead of SQL Server dataset
 | SQL     | Docker container    | Azure SQL Database                |
 | IR      | Self-hosted required| AutoResolve                       |
 | load script | Same             | Same (different .env)             |
-| ADF linked service | SqlServer   | AzureSqlDatabase                  |
+| ADF linked service | SqlServer   | AzureSqlDatabase + LsAzureBlobStaging (staging) |
 | ADF datasets | SqlServerTable  | AzureSqlTable                    |

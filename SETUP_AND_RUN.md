@@ -288,6 +288,11 @@ If GitHub loaded linked services from `adf/`, they contain placeholders. Update 
    - Use values from `adf-config/linkedService/LsSnowflake.json`
    - Account identifier, database, warehouse, user, password
    - **Test connection** → Save
+4. Open **LsAzureBlobStaging** (or create if missing) — required for SQL → Snowflake copy:
+   - **New** → **Azure Blob Storage** → Name: `LsAzureBlobStaging`
+   - Authentication: Account key
+   - Select your storage account (create one in same resource group if needed) and container `adf-staging`
+   - **Test connection** → Save
 
 ---
 
@@ -406,5 +411,5 @@ You should see 100 rows after the first successful run.
 |-------|----------------|
 | Cannot connect to local SQL | **AutoResolveIntegrationRuntime cannot reach `127.0.0.1`** — it runs in Azure and treats localhost as its own. Use a **Self-hosted Integration Runtime** installed on your machine. Edit LsSqlServer → Connect via → select the Self-hosted IR. |
 | Snowflake connection fails | Account identifier format, credentials, firewall |
-| Pipeline fails on Copy | Snowflake LEADS table exists; column mapping is correct |
+| Pipeline fails on Copy | Snowflake LEADS table exists; column mapping is correct; LsAzureBlobStaging exists (required for SQL→Snowflake) |
 | Watermark error | `load_leads_to_sql.py` ran and created `adt_watermark` and `sp_UpdateWatermark` |

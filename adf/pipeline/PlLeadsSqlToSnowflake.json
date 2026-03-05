@@ -13,6 +13,11 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'",
+						"partitionOption": "None"
+					},
 					"dataset": {
 						"referenceName": "DsSqlWatermarkLookup",
 						"type": "DatasetReference"
@@ -57,7 +62,14 @@
 							"type": "SnowflakeImportCopyCommand"
 						}
 					},
-					"enableStaging": false
+					"enableStaging": true,
+					"stagingSettings": {
+						"linkedServiceName": {
+							"referenceName": "LsAzureBlobStaging",
+							"type": "LinkedServiceReference"
+						},
+						"path": "adf-staging"
+					}
 				},
 				"outputs": [
 					{

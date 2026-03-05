@@ -1,0 +1,11 @@
+{
+	"name": "LsAzureBlobStaging",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"connectionString": "DefaultEndpointsProtocol=https;AccountName=<YOUR_STORAGE_ACCOUNT>;AccountKey=<YOUR_ACCOUNT_KEY>;EndpointSuffix=core.windows.net"
+		}
+	}
+}
