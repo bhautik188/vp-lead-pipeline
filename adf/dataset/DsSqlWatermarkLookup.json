@@ -1,15 +1,16 @@
 {
-    "name": "DsSqlWatermarkLookup",
-    "properties": {
-        "linkedServiceName": {
-            "referenceName": "LsSqlServer",
-            "type": "LinkedServiceReference"
-        },
-        "type": "SqlServerTable",
-        "typeProperties": {
-            "schema": "dbo",
-            "table": "adt_watermark",
-            "sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'"
-        }
-    }
+	"name": "DsSqlWatermarkLookup",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LsSqlServer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "adt_watermark",
+			"sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'"
+		}
+	}
 }
