@@ -70,6 +70,12 @@
 							"WatermarkValue": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}"
 						}
 					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DsSnowflakeLeads",
+						"type": "DatasetReference"
+					}
 				]
 			},
 			{
