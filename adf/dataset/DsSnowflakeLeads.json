@@ -1,14 +1,15 @@
 {
-    "name": "DsSnowflakeLeads",
-    "properties": {
-        "linkedServiceName": {
-            "referenceName": "LsSnowflake",
-            "type": "LinkedServiceReference"
-        },
-        "type": "SnowflakeV2Table",
-        "typeProperties": {
-            "schema": "PUBLIC",
-            "table": "LEADS"
-        }
-    }
+	"name": "DsSnowflakeLeads",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LsSnowflake",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SnowflakeV2Table",
+		"typeProperties": {
+			"schema": "PUBLIC",
+			"table": "LEADS"
+		}
+	}
 }
