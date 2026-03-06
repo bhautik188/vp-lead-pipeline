@@ -127,53 +127,6 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DsSqlLeads')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LsSqlServer",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"WatermarkValue": {
-						"type": "String"
-					}
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "Leads",
-					"sqlReaderQuery": "SELECT * FROM dbo.Leads WHERE UpdatedDateUtc > '@{dataset().WatermarkValue}'"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DsSqlWatermarkLookup')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LsSqlServer",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "adt_watermark",
-					"sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/DsSnowflakeLeads')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -240,6 +193,53 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DsSqlLeads')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LsSqlServer",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"WatermarkValue": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Leads",
+					"sqlReaderQuery": "SELECT * FROM dbo.Leads WHERE UpdatedDateUtc > '@{dataset().WatermarkValue}'"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DsSqlWatermarkLookup')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LsSqlServer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adt_watermark",
+					"sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/PlLeadsSqlToSnowflake')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -288,7 +288,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"source": {
-								"type": "SqlSource",
+								"type": "AzureSqlSource",
 								"partitionOption": "None"
 							},
 							"sink": {

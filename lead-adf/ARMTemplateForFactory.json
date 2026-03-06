@@ -97,7 +97,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"source": {
-								"type": "SqlSource",
+								"type": "AzureSqlSource",
 								"partitionOption": "None"
 							},
 							"sink": {
@@ -182,6 +182,72 @@
 				"[concat(variables('factoryId'), '/datasets/DsSnowflakeLeads')]",
 				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]",
 				"[concat(variables('factoryId'), '/linkedServices/LsAzureBlobStaging')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DsSnowflakeLeads')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LsSnowflake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SnowflakeV2Table",
+				"schema": [
+					{
+						"name": "ROWID",
+						"type": "NUMBER",
+						"precision": 38,
+						"scale": 0
+					},
+					{
+						"name": "ID",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "STATE",
+						"type": "NUMBER",
+						"precision": 38,
+						"scale": 0
+					},
+					{
+						"name": "CREATEDDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "CANCELLATIONREQUESTDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "CANCELLATIONDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "CANCELLATIONREJECTIONDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "SOLDEMPLOYEE",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "CANCELLEDEMPLOYEE",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "UPDATEDDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					}
+				],
+				"typeProperties": {
+					"schema": "PUBLIC",
+					"table": "LEADS"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LsSnowflake')]"
 			]
 		},
 		{
@@ -338,72 +404,6 @@
 				"typeProperties": {}
 			},
 			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DsSnowflakeLeads')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LsSnowflake",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "SnowflakeV2Table",
-				"schema": [
-					{
-						"name": "ROWID",
-						"type": "NUMBER",
-						"precision": 38,
-						"scale": 0
-					},
-					{
-						"name": "ID",
-						"type": "VARCHAR"
-					},
-					{
-						"name": "STATE",
-						"type": "NUMBER",
-						"precision": 38,
-						"scale": 0
-					},
-					{
-						"name": "CREATEDDATEUTC",
-						"type": "TIMESTAMP_NTZ"
-					},
-					{
-						"name": "CANCELLATIONREQUESTDATEUTC",
-						"type": "TIMESTAMP_NTZ"
-					},
-					{
-						"name": "CANCELLATIONDATEUTC",
-						"type": "TIMESTAMP_NTZ"
-					},
-					{
-						"name": "CANCELLATIONREJECTIONDATEUTC",
-						"type": "TIMESTAMP_NTZ"
-					},
-					{
-						"name": "SOLDEMPLOYEE",
-						"type": "VARCHAR"
-					},
-					{
-						"name": "CANCELLEDEMPLOYEE",
-						"type": "VARCHAR"
-					},
-					{
-						"name": "UPDATEDDATEUTC",
-						"type": "TIMESTAMP_NTZ"
-					}
-				],
-				"typeProperties": {
-					"schema": "PUBLIC",
-					"table": "LEADS"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LsSnowflake')]"
-			]
 		}
 	]
 }
