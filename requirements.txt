@@ -3,3 +3,4 @@ openpyxl
 python-dotenv
 pymssql
 sqlalchemy
+snowflake-connector-python

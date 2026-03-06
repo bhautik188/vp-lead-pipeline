@@ -133,6 +133,31 @@ CREATE TABLE IF NOT EXISTS LEADS (
 
 ---
 
+### B5. Create LeadEvents table (Step 4)
+
+1. **Select** (highlight) only this SQL from `snowflake/04_create_leadevents_table.sql`:
+
+```sql
+USE DATABASE LEADMANAGEMENT;
+USE WAREHOUSE LEAD_WH;
+USE SCHEMA PUBLIC;
+
+CREATE TABLE IF NOT EXISTS LEADEVENTS (
+    ID VARCHAR(36) NOT NULL,
+    EVENTTYPE VARCHAR(50) NOT NULL,
+    EVENTEMPLOYEE VARCHAR(255),
+    EVENTDATE TIMESTAMP_NTZ,
+    LEADID VARCHAR(36) NOT NULL,
+    UPDATEDDATEUTC TIMESTAMP_NTZ
+);
+```
+
+2. **Run** it: **Run** (▶) or **Ctrl+Enter** / **Cmd+Enter**.
+
+3. **Check**: Results should show `Table LEADEVENTS successfully created`.
+
+---
+
 ## Part C: Configure Credentials
 
 ### C1. Check SQL credentials in `.env`
@@ -390,6 +415,76 @@ You should see 100 rows after the first successful run.
 
 ---
 
+## Part G2: Step 4 — Transform LEADS to LeadEvents (Python)
+
+After LEADS has data (from the ADF pipeline), run the Python transformation:
+
+```bash
+source venv/bin/activate
+pip install snowflake-connector-python   # if not already installed
+python scripts/transform_leads_to_leadevents.py
+```
+
+**Expected output:** `Transformed 100 leads into LeadEvents`
+
+**Requirements:** `.env` must include `SNOWFLAKE_ACCOUNT`, `SNOWFLAKE_USER`, and `SNOWFLAKE_PASSWORD` (see Part C2).
+
+**Verify in Snowflake:**
+```sql
+USE DATABASE LEADMANAGEMENT;
+SELECT COUNT(*) FROM LEADEVENTS;   -- should match LEADS count
+SELECT * FROM LEADEVENTS LIMIT 10;
+```
+
+---
+
+## Part H: Finish Step 2 — Trigger, Run, and Alert Verification
+
+Use these steps to complete Step 2 (ADF pipeline) and confirm everything is active.
+
+### H1. Start the trigger
+
+1. Go to [portal.azure.com](https://portal.azure.com).
+2. Search for **lead-adf** (or open your Data Factory from **All resources**).
+3. Click **lead-adf** to open it.
+4. Click **Open Azure Data Factory Studio** (or **Author & monitor**).
+5. In the left sidebar, click **Manage** (gear icon).
+6. Under **Author**, click **Triggers**.
+7. In the triggers list, find **TrgLeadsEvery30Min**.
+8. Click the **TrgLeadsEvery30Min** row to open it.
+9. At the top, click **Start** (or toggle the status to **Started**).
+10. If prompted, click **Publish** to save and deploy.
+11. Confirm the **Status** column shows **Started** (green) instead of **Stopped**.
+
+---
+
+### H2. Run the pipeline once (manual test)
+
+1. In the left sidebar, click **Monitor** (chart icon).
+2. Under **Runs**, click **Pipeline runs**.
+3. Click **+ Trigger now** (or **Refresh** to see recent runs).
+4. In the **Trigger pipeline run** dialog:
+   - **Pipeline:** PlLeadsSqlToSnowflake (should be pre-selected)
+   - **Parameters:** Leave empty
+5. Click **OK**.
+6. Wait 1–2 minutes, then click **Refresh**.
+7. Find your run in the list — **Status** should be **Succeeded** (green checkmark).
+8. If it shows **Failed**, click the run to see error details.
+
+**Alternative path:** Author → Pipelines → open **PlLeadsSqlToSnowflake** → **Add trigger** → **Trigger now** → **OK**.
+
+---
+
+### H3. Confirm the alert rule is enabled
+
+1. In the Azure Portal top search bar, type **Monitor** and open **Monitor**.
+2. In the left menu, under **Alerts**, click **Alert rules**.
+3. In the list, find **Alert-ADF-Pipeline-Failure**.
+4. Check the **Status** column — it should show **Enabled**.
+5. If it shows **Disabled**, click the rule → **Enable** at the top.
+
+---
+
 ## Summary: Order of Operations
 
 | Order | Part | What you do |
@@ -402,7 +497,8 @@ You should see 100 rows after the first successful run.
 | 6 | D0b | Configure GitHub in ADF (Manage → Git configuration) |
 | 7 | E2–E6 | Create/update linked services, IR, verify datasets & pipeline, start trigger |
 | 8 | F | Run the pipeline |
-| 9 | G | Verify data in Snowflake |
+| 9 | G | Verify data in Snowflake (LEADS) |
+| 10 | G2 | Run Step 4: `python scripts/transform_leads_to_leadevents.py` → verify LEADEVENTS |
 
 ---
 
