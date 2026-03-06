@@ -1,0 +1,42 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "lead-adf"
+		},
+		"LsSnowflake_password": {
+			"value": ""
+		},
+		"LsSqlServer_password": {
+			"value": ""
+		},
+		"LsAzureBlobStaging_sasUri": {
+			"value": ""
+		},
+		"LsSnowflake_properties_typeProperties_database": {
+			"value": "LEADMANAGEMENT"
+		},
+		"LsSnowflake_properties_typeProperties_role": {
+			"value": "ACCOUNTADMIN"
+		},
+		"LsSnowflake_properties_typeProperties_host": {
+			"value": "IWXPGGB-SQ54018.snowflakecomputing.com"
+		},
+		"LsSqlServer_properties_typeProperties_server": {
+			"value": "tcp:lead-sql.database.windows.net,1433"
+		},
+		"LsSqlServer_properties_typeProperties_database": {
+			"value": "LeadManagement"
+		},
+		"LsSqlServer_properties_typeProperties_userName": {
+			"value": "sqladmin"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

@@ -1,0 +1,409 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "lead-adf"
+		},
+		"LsSnowflake_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LsSnowflake'"
+		},
+		"LsSqlServer_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'LsSqlServer'"
+		},
+		"LsAzureBlobStaging_sasUri": {
+			"type": "secureString",
+			"metadata": "Secure string for 'sasUri' of 'LsAzureBlobStaging'"
+		},
+		"LsSnowflake_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "LEADMANAGEMENT"
+		},
+		"LsSnowflake_properties_typeProperties_role": {
+			"type": "string",
+			"defaultValue": "ACCOUNTADMIN"
+		},
+		"LsSnowflake_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "IWXPGGB-SQ54018.snowflakecomputing.com"
+		},
+		"LsSqlServer_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "tcp:lead-sql.database.windows.net,1433"
+		},
+		"LsSqlServer_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "LeadManagement"
+		},
+		"LsSqlServer_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "sqladmin"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/PlLeadsSqlToSnowflake')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LookupWatermark",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:00:30",
+							"retry": 2,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DsSqlWatermarkLookup",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": true
+						}
+					},
+					{
+						"name": "CopyLeads",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "LookupWatermark",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.01:00:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlSource",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "SnowflakeV2Sink",
+								"importSettings": {
+									"type": "SnowflakeImportCopyCommand"
+								}
+							},
+							"enableStaging": true,
+							"stagingSettings": {
+								"linkedServiceName": {
+									"referenceName": "LsAzureBlobStaging",
+									"type": "LinkedServiceReference"
+								},
+								"path": "adf-staging"
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DsSqlLeads",
+								"type": "DatasetReference",
+								"parameters": {
+									"WatermarkValue": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DsSnowflakeLeads",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "UpdateWatermark",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [
+							{
+								"activity": "CopyLeads",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:01:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 30
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "dbo.sp_UpdateWatermark",
+							"storedProcedureParameters": {
+								"TableName": {
+									"value": "Leads",
+									"type": "String"
+								},
+								"OldWatermark": {
+									"value": {
+										"value": "@{activity('LookupWatermark').output.firstRow.WatermarkValue}",
+										"type": "Expression"
+									},
+									"type": "DateTime"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "LsSqlServer",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DsSqlWatermarkLookup')]",
+				"[concat(variables('factoryId'), '/datasets/DsSqlLeads')]",
+				"[concat(variables('factoryId'), '/datasets/DsSnowflakeLeads')]",
+				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]",
+				"[concat(variables('factoryId'), '/linkedServices/LsAzureBlobStaging')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DsSqlLeads')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LsSqlServer",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"WatermarkValue": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Leads",
+					"sqlReaderQuery": "SELECT * FROM dbo.Leads WHERE UpdatedDateUtc > '@{dataset().WatermarkValue}'"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DsSqlWatermarkLookup')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LsSqlServer",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adt_watermark",
+					"sqlReaderQuery": "SELECT WatermarkValue FROM dbo.adt_watermark WHERE TableName = 'Leads'"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LsSqlServer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LsAzureBlobStaging')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"sasUri": "[parameters('LsAzureBlobStaging_sasUri')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LsSnowflake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SnowflakeV2",
+				"typeProperties": {
+					"authenticationType": "Basic",
+					"accountIdentifier": "SQ54018",
+					"user": "BHAUTIK188",
+					"database": "[parameters('LsSnowflake_properties_typeProperties_database')]",
+					"warehouse": "LEAD_WH",
+					"role": "[parameters('LsSnowflake_properties_typeProperties_role')]",
+					"host": "[parameters('LsSnowflake_properties_typeProperties_host')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('LsSnowflake_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LsSqlServer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('LsSqlServer_properties_typeProperties_server')]",
+					"database": "[parameters('LsSqlServer_properties_typeProperties_database')]",
+					"encrypt": "True",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('LsSqlServer_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('LsSqlServer_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/TrgLeadsEvery30Min')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "PlLeadsSqlToSnowflake",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 30,
+						"startTime": "2025-01-01T00:00:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/PlLeadsSqlToSnowflake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SelfHostedIR')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/integrationRuntime1')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DsSnowflakeLeads')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LsSnowflake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SnowflakeV2Table",
+				"schema": [
+					{
+						"name": "ROWID",
+						"type": "NUMBER",
+						"precision": 38,
+						"scale": 0
+					},
+					{
+						"name": "ID",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "STATE",
+						"type": "NUMBER",
+						"precision": 38,
+						"scale": 0
+					},
+					{
+						"name": "CREATEDDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "CANCELLATIONREQUESTDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "CANCELLATIONDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "CANCELLATIONREJECTIONDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					},
+					{
+						"name": "SOLDEMPLOYEE",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "CANCELLEDEMPLOYEE",
+						"type": "VARCHAR"
+					},
+					{
+						"name": "UPDATEDDATEUTC",
+						"type": "TIMESTAMP_NTZ"
+					}
+				],
+				"typeProperties": {
+					"schema": "PUBLIC",
+					"table": "LEADS"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LsSnowflake')]"
+			]
+		}
+	]
+}
