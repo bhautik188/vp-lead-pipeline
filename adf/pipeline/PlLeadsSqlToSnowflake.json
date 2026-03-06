@@ -81,10 +81,6 @@
 			{
 				"name": "UpdateWatermark",
 				"type": "SqlServerStoredProcedure",
-				"linkedServiceName": {
-					"referenceName": "LsSqlServer",
-					"type": "LinkedServiceReference"
-				},
 				"dependsOn": [
 					{
 						"activity": "CopyLeads",
@@ -111,6 +107,10 @@
 							"type": "DateTime"
 						}
 					}
+				},
+				"linkedServiceName": {
+					"referenceName": "LsSqlServer",
+					"type": "LinkedServiceReference"
 				}
 			}
 		],

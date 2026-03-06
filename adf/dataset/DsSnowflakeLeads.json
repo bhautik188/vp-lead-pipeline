@@ -7,6 +7,52 @@
 		},
 		"annotations": [],
 		"type": "SnowflakeV2Table",
+		"schema": [
+			{
+				"name": "ROWID",
+				"type": "NUMBER",
+				"precision": 38,
+				"scale": 0
+			},
+			{
+				"name": "ID",
+				"type": "VARCHAR"
+			},
+			{
+				"name": "STATE",
+				"type": "NUMBER",
+				"precision": 38,
+				"scale": 0
+			},
+			{
+				"name": "CREATEDDATEUTC",
+				"type": "TIMESTAMP_NTZ"
+			},
+			{
+				"name": "CANCELLATIONREQUESTDATEUTC",
+				"type": "TIMESTAMP_NTZ"
+			},
+			{
+				"name": "CANCELLATIONDATEUTC",
+				"type": "TIMESTAMP_NTZ"
+			},
+			{
+				"name": "CANCELLATIONREJECTIONDATEUTC",
+				"type": "TIMESTAMP_NTZ"
+			},
+			{
+				"name": "SOLDEMPLOYEE",
+				"type": "VARCHAR"
+			},
+			{
+				"name": "CANCELLEDEMPLOYEE",
+				"type": "VARCHAR"
+			},
+			{
+				"name": "UPDATEDDATEUTC",
+				"type": "TIMESTAMP_NTZ"
+			}
+		],
 		"typeProperties": {
 			"schema": "PUBLIC",
 			"table": "LEADS"
