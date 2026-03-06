@@ -51,9 +51,15 @@
 						}
 					}
 				],
+				"outputs": [
+					{
+						"referenceName": "DsSnowflakeLeads",
+						"type": "DatasetReference"
+					}
+				],
 				"typeProperties": {
 					"source": {
-						"type": "SqlSource",
+						"type": "AzureSqlSource",
 						"partitionOption": "None"
 					},
 					"sink": {
@@ -70,13 +76,7 @@
 						},
 						"path": "adf-staging"
 					}
-				},
-				"outputs": [
-					{
-						"referenceName": "DsSnowflakeLeads",
-						"type": "DatasetReference"
-					}
-				]
+				}
 			},
 			{
 				"name": "UpdateWatermark",
