@@ -3,3 +3,4 @@ venv/
 adf-config/
 __pycache__/
 docs/
+scripts/setup_adf_config.py
