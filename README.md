@@ -60,7 +60,7 @@ Excel (100 leads) → SQL Server (Leads) → ADF (incremental) → Snowflake (LE
 ## Prerequisites
 
 - **Python 3.8+** with `venv`
-- **SQL Server** (Azure SQL or local/Docker)
+- **SQL Server** (Azure SQL)
 - **Snowflake** account
 - **Azure Data Factory** with GitHub integration
 - **Azure Blob Storage** (for ADF staging)
@@ -140,22 +140,7 @@ python scripts/transform_leads_to_leadevents.py
 
 ## Screenshots
 
-### ADF Pipeline — Successful Run
-<!-- Add: ![ADF Pipeline](screenshots/adf-pipeline-success.png) -->
-
-### Snowflake — LEADS Table
-<!-- Add: ![Snowflake Leads](screenshots/snowflake-leads.png) -->
-
-### Snowflake — LeadEvents Table
-<!-- Add: ![Snowflake LeadEvents](screenshots/snowflake-leadevents.png) -->
+See [SCREENSHOTS.md](SCREENSHOTS.md) for pipeline, ADF, Snowflake, and LeadEvents screenshots.
 
 ---
 
-## Task Requirements Met
-
-- [x] SQL scripts: create database, Leads table, insert Excel data
-- [x] ADF pipeline: SQL → Snowflake with incremental loads
-- [x] ADF: 30-minute trigger, linked services, extensibility
-- [x] Snowflake: warehouse, database, Leads & LeadEvents tables
-- [x] Python: Leads → LeadEvents transformation
-- [x] No hardcoded secrets (credentials via `.env`)
