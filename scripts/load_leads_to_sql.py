@@ -4,7 +4,7 @@ Reads Data Enginnering Task Dummy Data.xlsx and inserts all 100 rows (no dedupli
 
 Usage:
     Set .env with SQL_SERVER_CONNECTION_STRING or individual vars, then:
-    python load_leads_to_sql.py
+    python scripts/load_leads_to_sql.py
 """
 
 import os
@@ -16,6 +16,8 @@ import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def get_connection_params() -> dict:
@@ -167,8 +169,7 @@ def insert_leads_to_sql(df: pd.DataFrame, params: dict) -> int:
 
 
 def main() -> None:
-    script_dir = Path(__file__).resolve().parent
-    excel_path = script_dir / "Data Enginnering Task Dummy Data.xlsx"
+    excel_path = PROJECT_ROOT / "Data Enginnering Task Dummy Data.xlsx"
 
     if not excel_path.exists():
         print(f"Error: Excel file not found at {excel_path}", file=sys.stderr)

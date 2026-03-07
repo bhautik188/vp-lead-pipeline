@@ -1,3 +1,5 @@
 .env
 venv/
 adf-config/
+__pycache__/
+docs/

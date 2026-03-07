@@ -1,5 +1,5 @@
 -- Step 4: Watermark table for ADF incremental loads
--- Run after 03_insert_leads_data.sql (or use load_leads_to_sql.py – it creates this automatically)
+-- Run after 03_insert_leads_data.sql (or use scripts/load_leads_to_sql.py – it creates this automatically)
 
 USE LeadManagement;
 GO
