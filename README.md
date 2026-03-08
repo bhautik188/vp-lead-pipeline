@@ -32,14 +32,14 @@ Excel (100 leads) → SQL Server (Leads) → ADF (incremental) → Snowflake (LE
 
 ```
 ├── sql/                    # Step 1: SQL Server
-│   ├── 01_create_database.sql      ★ Create database
-│   ├── 02_create_leads_table.sql   ★ Create Leads table
-│   ├── 03_insert_leads_data.sql    ★ Insert Excel data (100 leads)
-│   └── 04_create_watermark_table.sql   (ADF incremental loads) (part of step 2)
+│   ├── 01_create_database.sql      
+│   ├── 02_create_leads_table.sql  
+│   ├── 03_insert_leads_data.sql   
+│   └── 04_create_watermark_table.sql ★ (ADF incremental loads) (part of step 2)
 ├── snowflake/              # Step 3: Snowflake
-│   ├── 01_create_warehouse.sql     ★ Create warehouse
-│   ├── 02_create_database.sql      ★ Create database
-│   ├── 03_create_leads_table.sql   ★ Create Leads table
+│   ├── 01_create_warehouse.sql  
+│   ├── 02_create_database.sql      
+│   ├── 03_create_leads_table.sql   
 │   └── 04_create_leadevents_table.sql ★ Create LeadEvents table (part of transformation task)
 ├── adf/                    # Step 2: Azure Data Factory
 │   ├── linkedService/      ★ LsSqlServer, LsSnowflake, LsAzureBlobStaging
@@ -47,7 +47,7 @@ Excel (100 leads) → SQL Server (Leads) → ADF (incremental) → Snowflake (LE
 │   ├── pipeline/           ★ PlLeadsSqlToSnowflake (SQL → Snowflake)
 │   └── trigger/            ★ TrgLeadsEvery30Min (every 30 min)
 ├── scripts/                # Python
-│   ├── load_leads_to_sql.py ★ Excel → SQL: reads Excel, creates table, inserts 100 leads, sets up watermark for ADF
+│   ├── load_leads_to_sql.py 
 │   └── transform_leads_to_leadevents.py   ★ Leads → LeadEvents (Step 4)
 ├── .env.example            # Template for credentials
 └── requirements.txt
