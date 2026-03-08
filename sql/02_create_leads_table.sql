@@ -1,9 +1,7 @@
--- Step 2: Create the Leads table
--- Run after 01_create_database.sql
+-- Creates the Leads table
 -- RowId allows multiple rows per Id (same lead, different state/email).
 
 USE LeadManagement;
-GO
 
 CREATE TABLE Leads (
     RowId INT IDENTITY(1,1) PRIMARY KEY,
@@ -17,4 +15,4 @@ CREATE TABLE Leads (
     CancelledEmployee NVARCHAR(255),
     UpdatedDateUtc DATETIME2
 );
-GO
+

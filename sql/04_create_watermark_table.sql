@@ -1,8 +1,6 @@
--- Step 4: Watermark table for ADF incremental loads
--- Run after 03_insert_leads_data.sql (or use scripts/load_leads_to_sql.py – it creates this automatically)
+-- Watermark table for ADF incremental loads
 
 USE LeadManagement;
-GO
 
 -- Control table for pipeline watermark (incremental load)
 CREATE TABLE dbo.adt_watermark (
@@ -18,7 +16,6 @@ VALUES (
     '1900-01-01 00:00:00.000',
     GETUTCDATE()
 );
-GO
 
 -- Stored procedure: computes new watermark from Leads and updates table
 CREATE OR ALTER PROCEDURE dbo.sp_UpdateWatermark
@@ -36,4 +33,3 @@ BEGIN
     SET WatermarkValue = @NewWatermark, LastModified = GETUTCDATE()
     WHERE TableName = @TableName;
 END;
-GO

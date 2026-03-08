@@ -1,9 +1,6 @@
--- Step 3: Insert Excel data (100 leads) into Leads table
--- Run after 02_create_leads_table.sql
--- Data from: Data Enginnering Task Dummy Data.xlsx
+-- Inserts Excel data (100 leads) into Leads table
 
 USE LeadManagement;
-GO
 
 INSERT INTO Leads (
     Id,
@@ -117,4 +114,4 @@ VALUES
 ('028BC4B5-4FC6-CE70-2F06-08DB903B8B25', 3, '2023-07-29 13:56:01.503', '2023-08-01 06:28:44.288', NULL, '2023-08-01 10:24:55.912', 'sales@pflegehilfe.de', 'finance@pflegehilfe.de', '2023-08-01 10:24:55.975'),
 ('7897CEF5-9ABB-C90F-2EAF-08DB8E6AD037', 3, '2023-07-27 06:29:21.410', '2023-08-01 08:55:34.908', NULL, '2023-08-01 10:21:36.881', 'sales@pflegehilfe.de', 'finance@pflegehilfe.de', '2023-08-01 10:21:36.895'),
 ('8F5FD93A-A1EC-CA1A-DF50-08DB8DC78CA7', 3, '2023-07-26 11:00:40.094', '2023-08-01 07:59:59.235', NULL, '2023-08-01 10:19:21.425', 'sales@pflegehilfe.de', 'finance@pflegehilfe.de', '2023-08-01 10:19:21.427')
-GO
+
