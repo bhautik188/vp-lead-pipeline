@@ -1,18 +1,9 @@
 """
-Transform LEADS to LeadEvents in Snowflake (Step 4).
+Transform LEADS to LeadEvents in Snowflake .
 
-Reads from Snowflake LEADS table, applies event transformation rules per
-Data_Engineering_Task.pdf, and writes to LeadEvents table.
+Reads from Snowflake LEADS table, applies event transformation rules, 
+and writes to LeadEvents table.
 
-Transformation rules:
-  State 0 → LeadSold (SoldEmployee, CreatedDateUtc)
-  State 1 → LeadCancellationRequested ("Unknown", CancellationRequestDateUtc)
-  State 2 → LeadCancelled (CancelledEmployee, CancellationDateUtc)
-  State 3 → LeadCancellationRejected ("Unknown", CancellationRejectionDateUtc)
-
-Usage:
-    Set .env with SNOWFLAKE_* vars, then (from project root):
-    python scripts/transform_leads_to_leadevents.py
 """
 
 import os
@@ -37,7 +28,7 @@ UNKNOWN_EMPLOYEE = "Unknown"
 
 class SnowflakeConnection:
     """
-    Snowflake connection manager using OOP and context manager pattern.
+    Snowflake connection manager.
     Loads credentials from .env; no hardcoded secrets.
     """
 
@@ -118,8 +109,8 @@ class SnowflakeConnection:
 
 def transform_lead_to_event(row: dict) -> Optional[dict]:
     """
-    Transform a single LEADS row to a LeadEvents row per task rules.
-    Returns None if the row cannot be transformed (e.g. invalid state).
+    Transform a single LEADS row to a LeadEvents row per transformation rules.
+    Returns None if the row cannot be transformed.
     """
     state = row.get("STATE")
     if state is None:
@@ -170,7 +161,8 @@ def transform_lead_to_event(row: dict) -> Optional[dict]:
 
 def run_transform(conn: SnowflakeConnection) -> int:
     """
-    Read LEADS from Snowflake, transform to LeadEvents, and insert.
+    Read LEADS from Snowflake, transform to LeadEvents.
+
     Returns the number of events inserted.
     """
     cursor = conn.execute(
@@ -191,7 +183,7 @@ def run_transform(conn: SnowflakeConnection) -> int:
     if not events:
         return 0
 
-    # Truncate and insert (idempotent for full refresh)
+    # Truncate and insert for full refresh.
     conn.execute("TRUNCATE TABLE LEADEVENTS")
 
     insert_sql = (
@@ -217,7 +209,6 @@ def run_transform(conn: SnowflakeConnection) -> int:
 
 
 def main() -> None:
-    """Main entry point: connect, transform, and write LeadEvents."""
     try:
         with SnowflakeConnection() as conn:
             count = run_transform(conn)

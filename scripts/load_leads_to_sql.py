@@ -1,10 +1,7 @@
 """
 Load Leads data from Excel into SQL Server.
-Reads Data Enginnering Task Dummy Data.xlsx and inserts all 100 rows (no deduplication).
-
-Usage:
-    Set .env with SQL_SERVER_CONNECTION_STRING or individual vars, then:
-    python scripts/load_leads_to_sql.py
+Reads Dummy Data and inserts all 100 rows.
+Uses credentials from .env (SQL_SERVER, SQL_USER, SQL_PASSWORD).
 """
 
 import os
@@ -50,9 +47,8 @@ def get_connection_params() -> dict:
 
 
 def load_excel_to_dataframe(excel_path: Path) -> pd.DataFrame:
-    """Load Leads data from Excel. Column names per task PDF (Excel Data Columns)."""
+    """Load Leads data from Excel."""
     df = pd.read_excel(excel_path)
-    # Task PDF schema: CancelledEmployee. Align if source uses different spelling.
     if "CancelledEmployee" not in df.columns and "CanceledEmployee" in df.columns:
         df["CancelledEmployee"] = df["CanceledEmployee"]
     cols = [
@@ -64,7 +60,7 @@ def load_excel_to_dataframe(excel_path: Path) -> pd.DataFrame:
 
 
 def insert_leads_to_sql(df: pd.DataFrame, params: dict) -> int:
-    """Insert Leads dataframe into SQL Server. Creates database and table if needed."""
+    """Insert Leads dataframe into SQL Server. Creates database and table."""
     try:
         from sqlalchemy import create_engine, text
         from urllib.parse import quote_plus
@@ -81,10 +77,8 @@ def insert_leads_to_sql(df: pd.DataFrame, params: dict) -> int:
         is_azure = params.get("is_azure", False)
 
         if is_azure:
-            # Azure SQL: database already exists (created via portal). Connect directly.
             engine = create_engine(make_url(db))
         else:
-            # On-prem: connect to master, create database if needed
             engine_master = create_engine(make_url("master"))
             last_err = None
             for attempt in range(6):
