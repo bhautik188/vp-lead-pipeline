@@ -163,7 +163,7 @@ def insert_leads_to_sql(df: pd.DataFrame, params: dict) -> int:
 
 
 def main() -> None:
-    excel_path = PROJECT_ROOT / "Data Enginnering Task Dummy Data.xlsx"
+    excel_path = PROJECT_ROOT / "Data Enginnering Task Dummy Data.xlsx"  #loads data from excel file
 
     if not excel_path.exists():
         print(f"Error: Excel file not found at {excel_path}", file=sys.stderr)
