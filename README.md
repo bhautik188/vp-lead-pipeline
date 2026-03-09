@@ -132,8 +132,8 @@ python scripts/transform_leads_to_leadevents.py
 ## Screenshots & Reports
 
 - **Pipeline screenshots:** [SCREENSHOTS.md](SCREENSHOTS.md)
-
-- **Interactive Dashboard:** [reports/dashboard.html](reports/dashboard.html) — data quality dashboard.
+  
+- **Interactive Dashboard:** [reports/dashboard.html](reports/dashboard.html) — data quality dashboard.[Download .html to view]
 
 ---
 
