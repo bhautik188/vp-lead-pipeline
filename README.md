@@ -48,7 +48,8 @@ Excel (100 leads) → SQL Server (Leads) → ADF (incremental) → Snowflake (LE
 │   └── trigger/            ★ TrgLeadsEvery30Min (every 30 min)
 ├── scripts/                # Python
 │   ├── load_leads_to_sql.py 
-│   └── transform_leads_to_leadevents.py   ★ Leads → LeadEvents (Step 4)
+│   ├── transform_leads_to_leadevents.py   ★ Leads → LeadEvents (Step 4)
+│   └── generate_dashboard.py             # Interactive dashboard → reports/dashboard.html
 ├── .env.example            # Template for credentials
 └── requirements.txt
 ```
@@ -105,6 +106,16 @@ python scripts/transform_leads_to_leadevents.py
 
 **Expected:** LeadEvents table populated in Snowflake with event types (LeadSold, LeadCancellationRequested, LeadCancelled, LeadCancellationRejected).
 
+### 5. Interactive Data Quality Dashboard
+
+```bash
+python scripts/generate_dashboard.py
+```
+
+Generates `reports/dashboard.html` — a Power BI-style interactive dashboard with KPI cards, click-to-filter charts, and cross-filtering. Open in a browser:
+
+**→ [Open Dashboard](reports/dashboard.html)**
+
 ---
 
 ## Environment Variables
@@ -138,9 +149,11 @@ python scripts/transform_leads_to_leadevents.py
 
 ---
 
-## Screenshots
+## Screenshots & Reports
 
-See [SCREENSHOTS.md](SCREENSHOTS.md) for pipeline, ADF, Snowflake, and LeadEvents screenshots.
+- **Pipeline screenshots:** [SCREENSHOTS.md](SCREENSHOTS.md)
+
+- **Interactive Dashboard:** [reports/dashboard.html](reports/dashboard.html) — data quality dashboard.
 
 ---
 

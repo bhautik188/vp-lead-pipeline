@@ -4,3 +4,4 @@ python-dotenv
 pymssql
 sqlalchemy
 snowflake-connector-python
+matplotlib

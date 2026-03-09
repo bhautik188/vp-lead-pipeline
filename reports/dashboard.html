@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lead Management — Data Quality Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f3f4f6;
+      color: #252423;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .header {
+      background: linear-gradient(135deg, #185abd 0%, #0e3a7d 100%);
+      color: white;
+      padding: 20px 24px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 700; }
+    .header p { font-size: 0.875rem; opacity: .9; margin-top: 4px; }
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      border-left: 4px solid #185abd;
+    }
+    .kpi-card.green { border-left-color: #107c10; }
+    .kpi-card.orange { border-left-color: #d83b01; }
+    .kpi-card.purple { border-left-color: #5c2d91; }
+    .kpi-card.teal { border-left-color: #038387; }
+    .kpi-value { font-size: 1.75rem; font-weight: 700; color: #252423; }
+    .kpi-label { font-size: 0.75rem; color: #605e5c; text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      min-height: 280px;
+    }
+    .chart-card h3 { font-size: 0.95rem; color: #252423; margin-bottom: 16px; font-weight: 600; }
+    .chart-wrap { position: relative; height: 240px; }
+    .full-width { grid-column: 1 / -1; }
+    .filter-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-bar select {
+      padding: 8px 12px; border-radius: 6px; border: 1px solid #d1d5db;
+      font-family: inherit; font-size: 0.875rem; cursor: pointer;
+    }
+    .btn { padding: 8px 16px; border-radius: 6px; border: none; font-family: inherit; font-size: 0.875rem; cursor: pointer; font-weight: 600; }
+    .btn-clear { background: #e5e7eb; color: #374151; }
+    .btn-clear:hover { background: #d1d5db; }
+    .filter-badge { background: #185abd; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; }
+    .chart-card { cursor: pointer; }
+    .chart-card .hint { font-size: 0.7rem; color: #9ca3af; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Lead Management — Data Quality Dashboard</h1>
+    <p>LEADS & LeadEvents • Snowflake • Refreshed: 2026-03-09 19:53 UTC • Click any chart to filter</p>
+  </div>
+
+  <div class="filter-bar">
+    <select id="filterState">
+      <option value="">All States</option>
+      <option value="Sold">Sold</option>
+      <option value="Cancellation Requested">Cancellation Requested</option>
+      <option value="Cancelled">Cancelled</option>
+      <option value="Cancellation Rejected">Cancellation Rejected</option>
+    </select>
+    <select id="filterEvent">
+      <option value="">All Event Types</option>
+      <option value="LeadSold">LeadSold</option>
+      <option value="LeadCancellationRequested">LeadCancellationRequested</option>
+      <option value="LeadCancelled">LeadCancelled</option>
+      <option value="LeadCancellationRejected">LeadCancellationRejected</option>
+    </select>
+    <button class="btn btn-clear" id="btnClear">Clear filters</button>
+    <span class="filter-badge" id="filterBadge" style="display:none">Filtered</span>
+  </div>
+
+    <div class="kpi-row" id="kpiRow">
+    <div class="kpi-card teal"><div class="kpi-value" id="kpiDq">100</div><div class="kpi-label">Data Quality Score</div></div>
+    <div class="kpi-card"><div class="kpi-value" id="kpiLeads">100</div><div class="kpi-label">Total LEADS Rows</div></div>
+    <div class="kpi-card"><div class="kpi-value" id="kpiUnique">80</div><div class="kpi-label">Unique Leads</div></div>
+    <div class="kpi-card"><div class="kpi-value" id="kpiDup">20</div><div class="kpi-label">Duplicate Lead Count</div></div>
+    <div class="kpi-card green"><div class="kpi-value" id="kpiEvents">100</div><div class="kpi-label">LeadEvents</div></div>
+    <div class="kpi-card orange"><div class="kpi-value" id="kpiLifecycle">25.0%</div><div class="kpi-label">Lifecycle Penetration</div></div>
+    <div class="kpi-card purple"><div class="kpi-value" id="kpiRates">33.3% / 33.3%</div><div class="kpi-label">Cancel Approved / Rejected</div></div>
+    <div class="kpi-card"><div class="kpi-value" id="kpiSeller">19</div><div class="kpi-label">Top Seller Leads</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Lead State Distribution <span class="hint">— Click to filter</span></h3>
+      <div class="chart-wrap"><canvas id="chartState"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Event Type Distribution <span class="hint">— Click to filter</span></h3>
+      <div class="chart-wrap"><canvas id="chartEvent"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Rows per Lead</h3>
+      <div class="chart-wrap"><canvas id="chartRows"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>State Split (Doughnut) <span class="hint">— Click to filter</span></h3>
+      <div class="chart-wrap"><canvas id="chartDoughnut"></canvas></div>
+    </div>
+    <div class="chart-card full-width">
+      <h3>Leads Created Over Time</h3>
+      <div class="chart-wrap" style="height:200px"><canvas id="chartLine"></canvas></div>
+    </div>
+  </div>
+
+  <script>
+    const COLORS = ['#185abd', '#107c10', '#d83b01', '#5c2d91', '#0078d4', '#00bcf2'];
+    const DATA = {"leads_count": 100, "events_count": 100, "unique_leads": 80, "dup_ids": 20, "approval_rate": 33.3, "rejection_rate": 33.3, "lifecycle_pct": 25.0, "top_seller": "employee@pflegehilfe.de", "top_seller_count": 19, "sold": 25, "requested": 25, "cancelled": 25, "rejected": 25, "state_labels": ["Sold", "Cancellation Requested", "Cancelled", "Cancellation Rejected"], "state_values": [25, 25, 25, 25], "event_labels": ["LeadSold", "LeadCancellationRequested", "LeadCancelled", "LeadCancellationRejected"], "event_values": [25, 25, 25, 25], "rows_labels": ["1 row(s)", "2 row(s)"], "rows_values": [60, 20], "date_labels": ["2023-07-24", "2023-07-25", "2023-07-26", "2023-07-27", "2023-07-28", "2023-07-29", "2023-07-30", "2023-07-31", "2023-08-01"], "date_values": [1, 13, 14, 8, 6, 3, 1, 17, 37], "orphan_count": 0, "dq_score": 100, "refresh_ts": "2026-03-09 19:53 UTC", "leads_raw": [{"id": "c817066b-aa29-cd75-d786-08db92790896", "state": 0, "created": "2023-08-01 10:21:13.589000"}, {"id": "46ed7db7-f5f1-c470-1237-08db9278e136", "state": 0, "created": "2023-08-01 10:20:07.532000"}, {"id": "30df8532-c699-c325-8dd8-08db9278a4a3", "state": 0, "created": "2023-08-01 10:18:25.923000"}, {"id": "d0a2b54f-bfbf-c133-f0e5-08db92788f7b", "state": 0, "created": "2023-08-01 10:17:50.408000"}, {"id": "af9228f1-05e4-c453-e2b3-08db9278861c", "state": 0, "created": "2023-08-01 10:17:34.686000"}, {"id": "f2e580a3-8e90-c864-8a84-08db9278861b", "state": 0, "created": "2023-08-01 10:17:34.686000"}, {"id": "ac92abb8-9172-cfff-42e3-08db9278861c", "state": 0, "created": "2023-08-01 10:17:34.686000"}, {"id": "e5003d49-688b-c5a3-4cfe-08db92788432", "state": 0, "created": "2023-08-01 10:17:31.471000"}, {"id": "331cf052-5bfa-cf98-89bc-08db92788431", "state": 0, "created": "2023-08-01 10:17:31.471000"}, {"id": "94aafcac-418b-c754-59f7-08db92787277", "state": 0, "created": "2023-08-01 10:17:01.735000"}, {"id": "815bf3a3-ddeb-c0d0-0c34-08db92785292", "state": 0, "created": "2023-08-01 10:16:08.212000"}, {"id": "c3886e44-d575-c893-f7f1-08db9277eb97", "state": 0, "created": "2023-08-01 10:13:15.456000"}, {"id": "56e5083b-34af-c5a7-5bd3-08db9277eb96", "state": 0, "created": "2023-08-01 10:13:15.456000"}, {"id": "9091ece9-c10b-c6ba-46b9-08db9277eb97", "state": 0, "created": "2023-08-01 10:13:15.456000"}, {"id": "4331f27d-9ab9-cbad-7e65-08db92779e38", "state": 0, "created": "2023-08-01 10:11:05.640000"}, {"id": "b5588335-0b6f-c785-f55f-08db92779e06", "state": 0, "created": "2023-08-01 10:11:05.317000"}, {"id": "e50e2a72-cea4-c83a-d5a9-08db92779e07", "state": 0, "created": "2023-08-01 10:11:05.317000"}, {"id": "d13608f9-e417-c440-5a92-08db9277959c", "state": 0, "created": "2023-08-01 10:10:51.194000"}, {"id": "90b70cc0-f8d8-cbf3-c154-08db9277959b", "state": 0, "created": "2023-08-01 10:10:51.194000"}, {"id": "e355914c-803a-cd80-8c5e-08db9277955a", "state": 0, "created": "2023-08-01 10:10:50.781000"}, {"id": "46c790a2-ea5e-c045-4b97-08db91b18cfe", "state": 1, "created": "2023-07-31 10:33:16.380000"}, {"id": "e69522e8-f16a-c283-fbb0-08db9271691a", "state": 1, "created": "2023-08-01 09:26:39.543000"}, {"id": "4633aa15-3c41-cc94-9176-08db8d0f3c4b", "state": 1, "created": "2023-07-25 13:01:17.870000"}, {"id": "ddc7be4a-765f-c568-b34b-08db8da4ead1", "state": 1, "created": "2023-07-26 06:52:45.731000"}, {"id": "46eb6eb0-e343-c6a9-1ac7-08db92631d04", "state": 1, "created": "2023-08-01 07:44:18.932000"}, {"id": "b1e18e2d-62e9-c5c0-6514-08db901a6a77", "state": 1, "created": "2023-07-29 09:58:53.296000"}, {"id": "eb3f7b12-e16c-c683-d295-08db8da4cf5e", "state": 1, "created": "2023-07-26 06:51:59.640000"}, {"id": "ae20bfc9-7afb-ca57-095b-08db8daeb635", "state": 1, "created": "2023-07-26 08:02:52.386000"}, {"id": "f2a089c7-333b-c7ad-f797-08db8da354d7", "state": 1, "created": "2023-07-26 06:41:24.574000"}, {"id": "47380e16-656b-ca08-c0c8-08db925e9506", "state": 1, "created": "2023-08-01 07:11:52.791000"}, {"id": "ef1001eb-bcc4-c028-d7d5-08db91bfcd75", "state": 1, "created": "2023-07-31 12:15:17.518000"}, {"id": "4802179b-7c44-c0d9-005e-08db8e6d6b67", "state": 1, "created": "2023-07-27 06:48:00.763000"}, {"id": "38e2ec8e-3c1e-c414-cd02-08db926f32fd", "state": 1, "created": "2023-08-01 09:10:49.761000"}, {"id": "3bbfa224-e875-c494-366a-08db926afeca", "state": 1, "created": "2023-08-01 08:40:44.195000"}, {"id": "592e86ae-7840-c635-4268-08db91a6b749", "state": 1, "created": "2023-07-31 09:15:42.871000"}, {"id": "971d53c0-7916-cb18-b56a-08db91c1b57f", "state": 1, "created": "2023-07-31 12:28:56.288000"}, {"id": "b550a448-9aa7-cc09-3b06-08db926bf0dd", "state": 1, "created": "2023-08-01 08:47:30.328000"}, {"id": "d1909a65-3a67-ceae-9112-08db9268d038", "state": 1, "created": "2023-08-01 08:25:07.071000"}, {"id": "52719195-de96-cb8f-2f83-08db926d89c5", "state": 1, "created": "2023-08-01 08:58:56.358000"}, {"id": "3a7d126e-865e-cbdc-b18e-08db926bcd06", "state": 1, "created": "2023-08-01 08:46:30.201000"}, {"id": "2bd6ee92-075a-c540-7e97-08db91936583", "state": 2, "created": "2023-07-31 06:57:25.247000"}, {"id": "1a527929-d64c-c031-104d-08db8d27c11a", "state": 2, "created": "2023-07-25 15:56:48.604000"}, {"id": "f4a6f637-b7e9-c4de-8339-08db8cef5067", "state": 2, "created": "2023-07-25 09:12:47.711000"}, {"id": "ce13539c-40f4-c498-4cfe-08db8f8930ad", "state": 2, "created": "2023-07-28 16:39:19.306000"}, {"id": "57e80bf5-492d-cf3e-a516-08db8d179419", "state": 2, "created": "2023-07-25 14:01:01.156000"}, {"id": "42760eba-df31-c537-61f2-08db8f5e3e28", "state": 2, "created": "2023-07-28 11:31:53.562000"}, {"id": "50389f08-c4f0-c330-84ad-08db8d273126", "state": 2, "created": "2023-07-25 15:52:47.110000"}, {"id": "2ea19d91-088f-c383-b043-08db91b18d21", "state": 2, "created": "2023-07-31 10:33:16.686000"}, {"id": "46f203bc-f464-c25f-278a-08db8f428541", "state": 2, "created": "2023-07-28 08:13:26.936000"}, {"id": "968ada5d-7bb9-c9e8-8092-08db8cdbeceb", "state": 2, "created": "2023-07-25 06:54:00.366000"}, {"id": "d29d5e1b-03db-c86e-f7ee-08db8f404df8", "state": 2, "created": "2023-07-28 07:57:35.192000"}, {"id": "ca7c1c67-15a4-cd8a-4e65-08db8da1fbe8", "state": 2, "created": "2023-07-26 06:31:45.863000"}, {"id": "3b06bf73-6aa4-c249-d5e9-08db8da92b70", "state": 2, "created": "2023-07-26 07:23:12.088000"}, {"id": "81254541-7f5c-c57b-7f37-08db8e69aef5", "state": 2, "created": "2023-07-27 06:21:16.116000"}, {"id": "a98805f0-3c5b-c8f9-1b17-08db8dfb382e", "state": 2, "created": "2023-07-26 17:10:32.198000"}, {"id": "7a109c44-8ee0-c947-8726-08db8dc99e52", "state": 2, "created": "2023-07-26 11:15:28.732000"}, {"id": "6b665403-1c5f-c91c-b234-08db8c532ae9", "state": 2, "created": "2023-07-24 14:35:03.324000"}, {"id": "5cbb4995-1945-c711-7a9a-08db8dcffdee", "state": 2, "created": "2023-07-26 12:01:06.114000"}, {"id": "6f5e560b-7337-cc97-ae1d-08db8f44b2a0", "state": 2, "created": "2023-07-28 08:29:02.056000"}, {"id": "4de9f64b-0468-c98c-b7f7-08db8cff73b8", "state": 2, "created": "2023-07-25 11:08:18.911000"}, {"id": "1755225d-dcf4-c5d0-05f2-08db918cc811", "state": 3, "created": "2023-07-31 06:10:04.114000"}, {"id": "ad1d5235-dde8-c76b-3bbb-08db918cc7b1", "state": 3, "created": "2023-07-31 06:10:03.481000"}, {"id": "09c31c45-b8d8-c874-12d9-08db91c16721", "state": 3, "created": "2023-07-31 12:26:44.802000"}, {"id": "d73c7d93-bc0b-c284-8786-08db8cec307b", "state": 3, "created": "2023-07-25 08:50:25.668000"}, {"id": "68d697f4-62fc-c6ee-0cf9-08db9199d0a0", "state": 3, "created": "2023-07-31 07:43:21.925000"}, {"id": "028bc4b5-4fc6-ce70-2f06-08db903b8b25", "state": 3, "created": "2023-07-29 13:56:01.503000"}, {"id": "7897cef5-9abb-c90f-2eaf-08db8e6ad037", "state": 3, "created": "2023-07-27 06:29:21.410000"}, {"id": "8f5fd93a-a1ec-ca1a-df50-08db8dc78ca7", "state": 3, "created": "2023-07-26 11:00:40.094000"}, {"id": "d7f3164d-7873-c76e-0ae2-08db8ea7a499", "state": 3, "created": "2023-07-27 13:44:47.526000"}, {"id": "f43dd13e-c2ea-ccfb-37a4-08db8e7ea281", "state": 3, "created": "2023-07-27 08:51:14.653000"}, {"id": "e7e9b04a-ca85-c279-6d4c-08db8e9238a7", "state": 3, "created": "2023-07-27 11:11:26.998000"}, {"id": "8b9f3bce-def6-cfc7-cd26-08db8d9f096d", "state": 3, "created": "2023-07-26 06:10:40.059000"}, {"id": "b4f63c60-40cc-ce53-c3e4-08db8ea0a4ad", "state": 3, "created": "2023-07-27 12:54:41.184000"}, {"id": "c087548a-d8cc-c96a-890c-08db8dc6e355", "state": 3, "created": "2023-07-26 10:55:56.024000"}, {"id": "ff3112b5-d680-cea1-9788-08db9256248d", "state": 3, "created": "2023-08-01 06:11:28.119000"}, {"id": "b8132508-140d-ce8f-0aed-08db919d176d", "state": 3, "created": "2023-07-31 08:06:49.209000"}, {"id": "c2827278-180a-c14b-f69a-08db919d7119", "state": 3, "created": "2023-07-31 08:09:19.651000"}, {"id": "dfbd8555-f038-cba5-e76d-08db90fea644", "state": 3, "created": "2023-07-30 13:12:38.872000"}, {"id": "0ea3b08c-1d8b-c87a-980f-08db91cd71d3", "state": 3, "created": "2023-07-31 13:52:56.710000"}, {"id": "19efbce7-a52b-c12e-5b84-08db91b18cbb", "state": 3, "created": "2023-07-31 10:33:15.941000"}, {"id": "c817066b-aa29-cd75-d786-08db92790896", "state": 0, "created": "2023-08-01 10:21:13.589000"}, {"id": "46ed7db7-f5f1-c470-1237-08db9278e136", "state": 0, "created": "2023-08-01 10:20:07.532000"}, {"id": "30df8532-c699-c325-8dd8-08db9278a4a3", "state": 0, "created": "2023-08-01 10:18:25.923000"}, {"id": "d0a2b54f-bfbf-c133-f0e5-08db92788f7b", "state": 0, "created": "2023-08-01 10:17:50.408000"}, {"id": "af9228f1-05e4-c453-e2b3-08db9278861c", "state": 0, "created": "2023-08-01 10:17:34.686000"}, {"id": "46c790a2-ea5e-c045-4b97-08db91b18cfe", "state": 1, "created": "2023-07-31 10:33:16.380000"}, {"id": "e69522e8-f16a-c283-fbb0-08db9271691a", "state": 1, "created": "2023-08-01 09:26:39.543000"}, {"id": "4633aa15-3c41-cc94-9176-08db8d0f3c4b", "state": 1, "created": "2023-07-25 13:01:17.870000"}, {"id": "ddc7be4a-765f-c568-b34b-08db8da4ead1", "state": 1, "created": "2023-07-26 06:52:45.731000"}, {"id": "46eb6eb0-e343-c6a9-1ac7-08db92631d04", "state": 1, "created": "2023-08-01 07:44:18.932000"}, {"id": "2bd6ee92-075a-c540-7e97-08db91936583", "state": 2, "created": "2023-07-31 06:57:25.247000"}, {"id": "1a527929-d64c-c031-104d-08db8d27c11a", "state": 2, "created": "2023-07-25 15:56:48.604000"}, {"id": "f4a6f637-b7e9-c4de-8339-08db8cef5067", "state": 2, "created": "2023-07-25 09:12:47.711000"}, {"id": "ce13539c-40f4-c498-4cfe-08db8f8930ad", "state": 2, "created": "2023-07-28 16:39:19.306000"}, {"id": "57e80bf5-492d-cf3e-a516-08db8d179419", "state": 2, "created": "2023-07-25 14:01:01.156000"}, {"id": "d73c7d93-bc0b-c284-8786-08db8cec307b", "state": 3, "created": "2023-07-25 08:50:25.668000"}, {"id": "68d697f4-62fc-c6ee-0cf9-08db9199d0a0", "state": 3, "created": "2023-07-31 07:43:21.925000"}, {"id": "028bc4b5-4fc6-ce70-2f06-08db903b8b25", "state": 3, "created": "2023-07-29 13:56:01.503000"}, {"id": "7897cef5-9abb-c90f-2eaf-08db8e6ad037", "state": 3, "created": "2023-07-27 06:29:21.410000"}, {"id": "8f5fd93a-a1ec-ca1a-df50-08db8dc78ca7", "state": 3, "created": "2023-07-26 11:00:40.094000"}], "events_raw": [{"leadId": "c817066b-aa29-cd75-d786-08db92790896", "eventType": "LeadSold"}, {"leadId": "46ed7db7-f5f1-c470-1237-08db9278e136", "eventType": "LeadSold"}, {"leadId": "30df8532-c699-c325-8dd8-08db9278a4a3", "eventType": "LeadSold"}, {"leadId": "d0a2b54f-bfbf-c133-f0e5-08db92788f7b", "eventType": "LeadSold"}, {"leadId": "af9228f1-05e4-c453-e2b3-08db9278861c", "eventType": "LeadSold"}, {"leadId": "f2e580a3-8e90-c864-8a84-08db9278861b", "eventType": "LeadSold"}, {"leadId": "ac92abb8-9172-cfff-42e3-08db9278861c", "eventType": "LeadSold"}, {"leadId": "e5003d49-688b-c5a3-4cfe-08db92788432", "eventType": "LeadSold"}, {"leadId": "331cf052-5bfa-cf98-89bc-08db92788431", "eventType": "LeadSold"}, {"leadId": "94aafcac-418b-c754-59f7-08db92787277", "eventType": "LeadSold"}, {"leadId": "815bf3a3-ddeb-c0d0-0c34-08db92785292", "eventType": "LeadSold"}, {"leadId": "c3886e44-d575-c893-f7f1-08db9277eb97", "eventType": "LeadSold"}, {"leadId": "56e5083b-34af-c5a7-5bd3-08db9277eb96", "eventType": "LeadSold"}, {"leadId": "9091ece9-c10b-c6ba-46b9-08db9277eb97", "eventType": "LeadSold"}, {"leadId": "4331f27d-9ab9-cbad-7e65-08db92779e38", "eventType": "LeadSold"}, {"leadId": "b5588335-0b6f-c785-f55f-08db92779e06", "eventType": "LeadSold"}, {"leadId": "e50e2a72-cea4-c83a-d5a9-08db92779e07", "eventType": "LeadSold"}, {"leadId": "d13608f9-e417-c440-5a92-08db9277959c", "eventType": "LeadSold"}, {"leadId": "90b70cc0-f8d8-cbf3-c154-08db9277959b", "eventType": "LeadSold"}, {"leadId": "e355914c-803a-cd80-8c5e-08db9277955a", "eventType": "LeadSold"}, {"leadId": "46c790a2-ea5e-c045-4b97-08db91b18cfe", "eventType": "LeadCancellationRequested"}, {"leadId": "e69522e8-f16a-c283-fbb0-08db9271691a", "eventType": "LeadCancellationRequested"}, {"leadId": "4633aa15-3c41-cc94-9176-08db8d0f3c4b", "eventType": "LeadCancellationRequested"}, {"leadId": "ddc7be4a-765f-c568-b34b-08db8da4ead1", "eventType": "LeadCancellationRequested"}, {"leadId": "46eb6eb0-e343-c6a9-1ac7-08db92631d04", "eventType": "LeadCancellationRequested"}, {"leadId": "b1e18e2d-62e9-c5c0-6514-08db901a6a77", "eventType": "LeadCancellationRequested"}, {"leadId": "eb3f7b12-e16c-c683-d295-08db8da4cf5e", "eventType": "LeadCancellationRequested"}, {"leadId": "ae20bfc9-7afb-ca57-095b-08db8daeb635", "eventType": "LeadCancellationRequested"}, {"leadId": "f2a089c7-333b-c7ad-f797-08db8da354d7", "eventType": "LeadCancellationRequested"}, {"leadId": "47380e16-656b-ca08-c0c8-08db925e9506", "eventType": "LeadCancellationRequested"}, {"leadId": "ef1001eb-bcc4-c028-d7d5-08db91bfcd75", "eventType": "LeadCancellationRequested"}, {"leadId": "4802179b-7c44-c0d9-005e-08db8e6d6b67", "eventType": "LeadCancellationRequested"}, {"leadId": "38e2ec8e-3c1e-c414-cd02-08db926f32fd", "eventType": "LeadCancellationRequested"}, {"leadId": "3bbfa224-e875-c494-366a-08db926afeca", "eventType": "LeadCancellationRequested"}, {"leadId": "592e86ae-7840-c635-4268-08db91a6b749", "eventType": "LeadCancellationRequested"}, {"leadId": "971d53c0-7916-cb18-b56a-08db91c1b57f", "eventType": "LeadCancellationRequested"}, {"leadId": "b550a448-9aa7-cc09-3b06-08db926bf0dd", "eventType": "LeadCancellationRequested"}, {"leadId": "d1909a65-3a67-ceae-9112-08db9268d038", "eventType": "LeadCancellationRequested"}, {"leadId": "52719195-de96-cb8f-2f83-08db926d89c5", "eventType": "LeadCancellationRequested"}, {"leadId": "3a7d126e-865e-cbdc-b18e-08db926bcd06", "eventType": "LeadCancellationRequested"}, {"leadId": "2bd6ee92-075a-c540-7e97-08db91936583", "eventType": "LeadCancelled"}, {"leadId": "1a527929-d64c-c031-104d-08db8d27c11a", "eventType": "LeadCancelled"}, {"leadId": "f4a6f637-b7e9-c4de-8339-08db8cef5067", "eventType": "LeadCancelled"}, {"leadId": "ce13539c-40f4-c498-4cfe-08db8f8930ad", "eventType": "LeadCancelled"}, {"leadId": "57e80bf5-492d-cf3e-a516-08db8d179419", "eventType": "LeadCancelled"}, {"leadId": "42760eba-df31-c537-61f2-08db8f5e3e28", "eventType": "LeadCancelled"}, {"leadId": "50389f08-c4f0-c330-84ad-08db8d273126", "eventType": "LeadCancelled"}, {"leadId": "2ea19d91-088f-c383-b043-08db91b18d21", "eventType": "LeadCancelled"}, {"leadId": "46f203bc-f464-c25f-278a-08db8f428541", "eventType": "LeadCancelled"}, {"leadId": "968ada5d-7bb9-c9e8-8092-08db8cdbeceb", "eventType": "LeadCancelled"}, {"leadId": "d29d5e1b-03db-c86e-f7ee-08db8f404df8", "eventType": "LeadCancelled"}, {"leadId": "ca7c1c67-15a4-cd8a-4e65-08db8da1fbe8", "eventType": "LeadCancelled"}, {"leadId": "3b06bf73-6aa4-c249-d5e9-08db8da92b70", "eventType": "LeadCancelled"}, {"leadId": "81254541-7f5c-c57b-7f37-08db8e69aef5", "eventType": "LeadCancelled"}, {"leadId": "a98805f0-3c5b-c8f9-1b17-08db8dfb382e", "eventType": "LeadCancelled"}, {"leadId": "7a109c44-8ee0-c947-8726-08db8dc99e52", "eventType": "LeadCancelled"}, {"leadId": "6b665403-1c5f-c91c-b234-08db8c532ae9", "eventType": "LeadCancelled"}, {"leadId": "5cbb4995-1945-c711-7a9a-08db8dcffdee", "eventType": "LeadCancelled"}, {"leadId": "6f5e560b-7337-cc97-ae1d-08db8f44b2a0", "eventType": "LeadCancelled"}, {"leadId": "4de9f64b-0468-c98c-b7f7-08db8cff73b8", "eventType": "LeadCancelled"}, {"leadId": "1755225d-dcf4-c5d0-05f2-08db918cc811", "eventType": "LeadCancellationRejected"}, {"leadId": "ad1d5235-dde8-c76b-3bbb-08db918cc7b1", "eventType": "LeadCancellationRejected"}, {"leadId": "09c31c45-b8d8-c874-12d9-08db91c16721", "eventType": "LeadCancellationRejected"}, {"leadId": "d73c7d93-bc0b-c284-8786-08db8cec307b", "eventType": "LeadCancellationRejected"}, {"leadId": "68d697f4-62fc-c6ee-0cf9-08db9199d0a0", "eventType": "LeadCancellationRejected"}, {"leadId": "028bc4b5-4fc6-ce70-2f06-08db903b8b25", "eventType": "LeadCancellationRejected"}, {"leadId": "7897cef5-9abb-c90f-2eaf-08db8e6ad037", "eventType": "LeadCancellationRejected"}, {"leadId": "8f5fd93a-a1ec-ca1a-df50-08db8dc78ca7", "eventType": "LeadCancellationRejected"}, {"leadId": "d7f3164d-7873-c76e-0ae2-08db8ea7a499", "eventType": "LeadCancellationRejected"}, {"leadId": "f43dd13e-c2ea-ccfb-37a4-08db8e7ea281", "eventType": "LeadCancellationRejected"}, {"leadId": "e7e9b04a-ca85-c279-6d4c-08db8e9238a7", "eventType": "LeadCancellationRejected"}, {"leadId": "8b9f3bce-def6-cfc7-cd26-08db8d9f096d", "eventType": "LeadCancellationRejected"}, {"leadId": "b4f63c60-40cc-ce53-c3e4-08db8ea0a4ad", "eventType": "LeadCancellationRejected"}, {"leadId": "c087548a-d8cc-c96a-890c-08db8dc6e355", "eventType": "LeadCancellationRejected"}, {"leadId": "ff3112b5-d680-cea1-9788-08db9256248d", "eventType": "LeadCancellationRejected"}, {"leadId": "b8132508-140d-ce8f-0aed-08db919d176d", "eventType": "LeadCancellationRejected"}, {"leadId": "c2827278-180a-c14b-f69a-08db919d7119", "eventType": "LeadCancellationRejected"}, {"leadId": "dfbd8555-f038-cba5-e76d-08db90fea644", "eventType": "LeadCancellationRejected"}, {"leadId": "0ea3b08c-1d8b-c87a-980f-08db91cd71d3", "eventType": "LeadCancellationRejected"}, {"leadId": "19efbce7-a52b-c12e-5b84-08db91b18cbb", "eventType": "LeadCancellationRejected"}, {"leadId": "c817066b-aa29-cd75-d786-08db92790896", "eventType": "LeadSold"}, {"leadId": "46ed7db7-f5f1-c470-1237-08db9278e136", "eventType": "LeadSold"}, {"leadId": "30df8532-c699-c325-8dd8-08db9278a4a3", "eventType": "LeadSold"}, {"leadId": "d0a2b54f-bfbf-c133-f0e5-08db92788f7b", "eventType": "LeadSold"}, {"leadId": "af9228f1-05e4-c453-e2b3-08db9278861c", "eventType": "LeadSold"}, {"leadId": "46c790a2-ea5e-c045-4b97-08db91b18cfe", "eventType": "LeadCancellationRequested"}, {"leadId": "e69522e8-f16a-c283-fbb0-08db9271691a", "eventType": "LeadCancellationRequested"}, {"leadId": "4633aa15-3c41-cc94-9176-08db8d0f3c4b", "eventType": "LeadCancellationRequested"}, {"leadId": "ddc7be4a-765f-c568-b34b-08db8da4ead1", "eventType": "LeadCancellationRequested"}, {"leadId": "46eb6eb0-e343-c6a9-1ac7-08db92631d04", "eventType": "LeadCancellationRequested"}, {"leadId": "2bd6ee92-075a-c540-7e97-08db91936583", "eventType": "LeadCancelled"}, {"leadId": "1a527929-d64c-c031-104d-08db8d27c11a", "eventType": "LeadCancelled"}, {"leadId": "f4a6f637-b7e9-c4de-8339-08db8cef5067", "eventType": "LeadCancelled"}, {"leadId": "ce13539c-40f4-c498-4cfe-08db8f8930ad", "eventType": "LeadCancelled"}, {"leadId": "57e80bf5-492d-cf3e-a516-08db8d179419", "eventType": "LeadCancelled"}, {"leadId": "d73c7d93-bc0b-c284-8786-08db8cec307b", "eventType": "LeadCancellationRejected"}, {"leadId": "68d697f4-62fc-c6ee-0cf9-08db9199d0a0", "eventType": "LeadCancellationRejected"}, {"leadId": "028bc4b5-4fc6-ce70-2f06-08db903b8b25", "eventType": "LeadCancellationRejected"}, {"leadId": "7897cef5-9abb-c90f-2eaf-08db8e6ad037", "eventType": "LeadCancellationRejected"}, {"leadId": "8f5fd93a-a1ec-ca1a-df50-08db8dc78ca7", "eventType": "LeadCancellationRejected"}], "state_to_code": {"Sold": 0, "Cancellation Requested": 1, "Cancelled": 2, "Cancellation Rejected": 3}, "event_to_state": {"LeadSold": 0, "LeadCancellationRequested": 1, "LeadCancelled": 2, "LeadCancellationRejected": 3}};
+    const stateCode = { "Sold": 0, "Cancellation Requested": 1, "Cancelled": 2, "Cancellation Rejected": 3 };
+    const stateLabel = { 0: "Sold", 1: "Cancellation Requested", 2: "Cancelled", 3: "Cancellation Rejected" };
+
+    function filterData(stateFilter, eventFilter) {
+      let leads = DATA.leads_raw.slice();
+      let events = DATA.events_raw.slice();
+      if (stateFilter) {
+        const code = stateCode[stateFilter];
+        leads = leads.filter(l => l.state === code);
+        const ids = new Set(leads.map(l => l.id));
+        events = events.filter(e => ids.has(e.leadId));
+      }
+      if (eventFilter) {
+        events = events.filter(e => e.eventType === eventFilter);
+        const ids = new Set(events.map(e => e.leadId));
+        leads = leads.filter(l => ids.has(l.id));
+      }
+      return { leads, events };
+    }
+
+    function computeMetrics(leads, events) {
+      const rowsPerLead = {};
+      leads.forEach(l => { rowsPerLead[l.id] = (rowsPerLead[l.id] || 0) + 1; });
+      const ids = Object.keys(rowsPerLead);
+      const dupIds = ids.filter(id => rowsPerLead[id] > 1).length;
+      const uniq = ids.length;
+      const s = leads.filter(l => l.state === 0).length;
+      const req = leads.filter(l => l.state === 1).length;
+      const can = leads.filter(l => l.state === 2).length;
+      const rej = leads.filter(l => l.state === 3).length;
+      const flow = req + can + rej;
+      const appRate = flow ? (can / flow * 100).toFixed(1) : 0;
+      const rejRate = flow ? (rej / flow * 100).toFixed(1) : 0;
+      const lifePct = uniq ? (dupIds / uniq * 100).toFixed(1) : 0;
+      const byState = [0,1,2,3].map(i => leads.filter(l => l.state === i).length);
+      const byEvent = {};
+      events.forEach(e => { byEvent[e.eventType] = (byEvent[e.eventType] || 0) + 1; });
+      const eventLabels = Object.keys(byEvent);
+      const eventValues = eventLabels.map(l => byEvent[l]);
+      const byRows = {};
+      ids.forEach(id => { const n = rowsPerLead[id]; byRows[n] = (byRows[n] || 0) + 1; });
+      const rowsLabels = Object.keys(byRows).map(Number).sort((a,b)=>a-b).map(n => n + " row(s)");
+      const rowsValues = Object.keys(byRows).map(Number).sort((a,b)=>a-b).map(n => byRows[n]);
+      const byDate = {};
+      leads.forEach(l => { if (l.created) { const d = l.created.split(' ')[0]; byDate[d] = (byDate[d] || 0) + 1; } });
+      const dateLabels = Object.keys(byDate).sort();
+      const dateValues = dateLabels.map(d => byDate[d]);
+      return {
+        leadsCount: leads.length, eventsCount: events.length, uniqueLeads: uniq, dupIds,
+        approvalRate: parseFloat(appRate), rejectionRate: parseFloat(rejRate), lifecyclePct: parseFloat(lifePct),
+        stateValues: byState, eventLabels, eventValues, rowsLabels, rowsValues, dateLabels, dateValues,
+        soldCount: s
+      };
+    }
+
+    let charts = {};
+    let currentFilter = { state: null, event: null };
+
+    function applyFilter() {
+      const { leads, events } = filterData(currentFilter.state, currentFilter.event);
+      const m = computeMetrics(leads, events);
+      document.getElementById('filterBadge').style.display = (currentFilter.state || currentFilter.event) ? 'inline' : 'none';
+      document.getElementById('filterState').value = currentFilter.state || '';
+      document.getElementById('filterEvent').value = currentFilter.event || '';
+      document.getElementById('kpiLeads').textContent = m.leadsCount;
+      document.getElementById('kpiUnique').textContent = m.uniqueLeads;
+      document.getElementById('kpiDup').textContent = m.dupIds;
+      document.getElementById('kpiEvents').textContent = m.eventsCount;
+      document.getElementById('kpiLifecycle').textContent = m.lifecyclePct + '%';
+      document.getElementById('kpiRates').textContent = m.approvalRate + '% / ' + m.rejectionRate + '%';
+      document.getElementById('kpiSeller').textContent = currentFilter.state || currentFilter.event ? m.soldCount : DATA.top_seller_count;
+      if (charts.state) { charts.state.data.datasets[0].data = m.stateValues; charts.state.update(); }
+      if (charts.event) { charts.event.data.labels = m.eventLabels; charts.event.data.datasets[0].data = m.eventValues; charts.event.update(); }
+      if (charts.rows) { charts.rows.data.labels = m.rowsLabels; charts.rows.data.datasets[0].data = m.rowsValues; charts.rows.update(); }
+      if (charts.doughnut) { charts.doughnut.data.datasets[0].data = m.stateValues; charts.doughnut.update(); }
+      if (charts.line) { charts.line.data.labels = m.dateLabels; charts.line.data.datasets[0].data = m.dateValues; charts.line.update(); }
+    }
+
+    function onClickState(e, ctx) {
+      if (!ctx.length) return;
+      const i = ctx[0].index;
+      const label = DATA.state_labels[i];
+      currentFilter.state = currentFilter.state === label ? null : label;
+      currentFilter.event = null;
+      applyFilter();
+    }
+
+    function onClickEvent(e, ctx) {
+      if (!ctx.length) return;
+      const i = ctx[0].index;
+      const label = charts.event.data.labels[i];
+      currentFilter.event = currentFilter.event === label ? null : label;
+      currentFilter.state = null;
+      applyFilter();
+    }
+
+    function onClickDoughnut(e, ctx) {
+      if (!ctx.length) return;
+      const i = ctx[0].index;
+      const label = DATA.state_labels[i];
+      currentFilter.state = currentFilter.state === label ? null : label;
+      currentFilter.event = null;
+      applyFilter();
+    }
+
+    const safePct = (val, total) => total ? (val / total * 100).toFixed(1) : 0;
+    const defaultTooltip = { callbacks: { label: (ctx) => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return ' ' + ctx.parsed.y + (t ? ' (' + safePct(ctx.parsed.y, t) + '%)' : ''); } } };
+    const doughnutTooltip = { callbacks: { label: (ctx) => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return ' ' + ctx.raw + (t ? ' (' + safePct(ctx.raw, t) + '%)' : ''); } } };
+
+    charts.state = new Chart(document.getElementById('chartState'), {
+      type: 'bar',
+      data: { labels: DATA.state_labels, datasets: [{ label: 'Count', data: DATA.state_values, backgroundColor: COLORS }] },
+      options: { responsive: true, maintainAspectRatio: false, onClick: onClickState, plugins: { legend: { display: false }, tooltip: defaultTooltip }, scales: { y: { beginAtZero: true } } }
+    });
+
+    charts.event = new Chart(document.getElementById('chartEvent'), {
+      type: 'bar',
+      data: { labels: DATA.event_labels, datasets: [{ label: 'Count', data: DATA.event_values, backgroundColor: COLORS }] },
+      options: { responsive: true, maintainAspectRatio: false, onClick: onClickEvent, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => { const t = ctx.dataset.data.reduce((a,b)=>a+b,0); return ' ' + ctx.parsed.x + (t ? ' (' + safePct(ctx.parsed.x, t) + '%)' : ''); } } } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
+    });
+
+    charts.doughnut = new Chart(document.getElementById('chartDoughnut'), {
+      type: 'doughnut',
+      data: { labels: DATA.state_labels, datasets: [{ data: DATA.state_values, backgroundColor: COLORS, borderWidth: 0 }] },
+      options: { responsive: true, maintainAspectRatio: false, onClick: onClickDoughnut, plugins: { tooltip: doughnutTooltip } }
+    });
+
+    charts.rows = new Chart(document.getElementById('chartRows'), {
+      type: 'bar',
+      data: { labels: DATA.rows_labels, datasets: [{ label: 'Leads', data: DATA.rows_values, backgroundColor: COLORS }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    charts.line = new Chart(document.getElementById('chartLine'), {
+      type: 'line',
+      data: { labels: DATA.date_labels, datasets: [{ label: 'Leads Created', data: DATA.date_values, borderColor: '#185abd', backgroundColor: 'rgba(24,90,189,0.1)', fill: true, tension: 0.3 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    document.getElementById('filterState').addEventListener('change', function() { currentFilter.state = this.value || null; currentFilter.event = null; applyFilter(); });
+    document.getElementById('filterEvent').addEventListener('change', function() { currentFilter.event = this.value || null; currentFilter.state = null; applyFilter(); });
+    document.getElementById('btnClear').addEventListener('click', function() { currentFilter = { state: null, event: null }; applyFilter(); });
+  </script>
+</body>
+</html>

@@ -1,7 +1,10 @@
 # Environment 
 .env
+.matplotlib
 venv/
 adf-config/
 __pycache__/
 docs/
 scripts/setup_adf_config.py
+scripts/data_quality_report.py
+scripts/generate_dashboard.py
