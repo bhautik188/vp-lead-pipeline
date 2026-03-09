@@ -21,15 +21,6 @@ Excel (100 leads) → SQL Server (Leads) → ADF (incremental) → Snowflake (LE
 
 ## Project Structure
 
-*Scripts marked with ★ are explicitly required by the task PDF.*
-
-| Task Step | Required Scripts |
-|-----------|------------------|
-| **Step 1 — SQL** | `01_create_database.sql`, `02_create_leads_table.sql`, `03_insert_leads_data.sql` + `load_leads_to_sql.py` (Excel → SQL) |
-| **Step 2 — ADF** | `adf/` pipeline, linked services, trigger (30 min), incremental loads |
-| **Step 3 — Snowflake** | `01_create_warehouse.sql`, `02_create_database.sql`, `03_create_leads_table.sql` |
-| **Step 4 — Python** | `transform_leads_to_leadevents.py` (Leads → LeadEvents) + `04_create_leadevents_table.sql` |
-
 ```
 ├── sql/                    # Step 1: SQL Server
 │   ├── 01_create_database.sql      
